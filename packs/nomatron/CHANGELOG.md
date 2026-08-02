@@ -1,7 +1,21 @@
-## Version v0.2.0 (Unreleased)
+## Version v0.2.0 (2026-08-02)
+
+### Added
+
+- **Secrets backends:** `secrets_backend` supports `pack_vars` (default), `nomad_var` (recommended for production), and `vault`. Runtime secrets are injected via Nomad template blocks — not stored in the job specification.
+- **Production validation:** `deployment_profile=production|ha` now requires `server.trusted_origins`, and `http_port_static` when `load_balancer_mode=none`.
+- **HA runbook:** post-deploy output documents one-time database initialization for HA.
+- **Secrets guide:** [docs/common/secrets.md](https://github.com/nomatronio/nomatron-pack/blob/main/docs/common/secrets.md)
+- Example vars: `production.byodb.nomad-var.vars.hcl.example`, `production.byodb.vault.vars.hcl.example`
+
+### Removed
+
+- **`database_mode=dev`** — use `nomatron server --dev` to trial Nomatron; this pack is for lab (`provision`) or production (`byodb`) on Nomad only.
+- `dev` variable object and `examples/dev.vars.hcl.example`.
 
 ### Fixed
 
+- **Binary artifact path:** release tarballs unpack under the task `local/bin/` directory; exec `command` uses that relative path.
 - Config file path for Docker tasks: use `${NOMAD_TASK_DIR}/config/nomatron.hcl` (Nomad mounts `local/` as `NOMAD_TASK_DIR`, so do not double the `local/` prefix).
 - Serf `node_name` default uses Nomad template `{{ env "NOMAD_ALLOC_ID" }}` instead of literal `${NOMAD_ALLOC_ID}` in `nomatron.hcl` (Nomatron's HCL parser rejects variable interpolation).
 - Default `nomatron_version` updated to `v0.1.0-rc.20`.
@@ -11,6 +25,7 @@
 
 ### Changed
 
+- Default `database_mode=provision`, `runtime=docker` — lab quickstart requires a vars file (license + secrets).
 - Repository layout: synced pack contains registry files only; platform guides in repo-root `docs/`, example vars in repo-root `examples/`.
 - Default database pool limits: `max_open_conns=25`, `max_idle_conns=10`
 - `deployment_profile` now enforced at render time with profile-specific validation

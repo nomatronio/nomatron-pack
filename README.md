@@ -107,7 +107,7 @@ nomad-pack registry list
 
 ### 4. Create your variables file
 
-Copy an example from [packs/nomatron/README.md](packs/nomatron/README.md) (each profile includes full HCL you can paste into a `*.vars.hcl` file). The same content lives under [`examples/`](examples/) in this repository for convenience.
+**Try Nomatron (no license):** run `nomatron server --dev` on your machine — see [Try Nomatron](packs/nomatron/README.md#try-nomatron-not-the-nomad-pack). This pack is for deploying on Nomad (lab or production); copy an example vars file before `nomad-pack run`.
 
 ```bash
 # After pasting HCL into production.vars.hcl:

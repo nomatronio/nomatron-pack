@@ -6,10 +6,11 @@ Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron N
 
 ## Before you start
 
-1. Choose a [deployment profile](../packs/nomatron/README.md#deployment-profiles): `production`, `ha`, or `quickstart`.
-2. Read the **shared guides** below — especially if you are new to Nomad placement or load balancing.
-3. Follow your **platform guide**.
-4. Deploy using a variables block from [packs/nomatron/README.md](../packs/nomatron/README.md) (or copy from [examples/](../examples/)).
+1. **Trying Nomatron?** Run `nomatron server --dev` — see [Try Nomatron](../packs/nomatron/README.md#try-nomatron-not-the-nomad-pack).
+2. Choose a [deployment profile](../packs/nomatron/README.md#deployment-profiles): `production`, `ha`, or lab `quickstart`.
+3. Read the **shared guides** below — especially for production placement or load balancing.
+4. Follow your **platform guide** (production/HA only).
+5. Deploy using a variables block from [packs/nomatron/README.md](../packs/nomatron/README.md) (or `nomad-pack run .` with no vars file for dev).
 
 ## Shared guides (read these)
 
@@ -19,6 +20,7 @@ Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron N
 | **Load balancing** | [load-balancing.md](common/load-balancing.md) | ALB vs Traefik vs Fabio vs direct — **you pick one entry path** |
 | **Client software** | [nomad-client-setup.md](common/nomad-client-setup.md) | Docker, CNI, full client config walkthrough |
 | **Firewall ports** | [ports-and-firewall.md](common/ports-and-firewall.md) | Port matrix for Nomatron, Serf, LB, Postgres |
+| **Secrets** | [secrets.md](common/secrets.md) | Nomad Variables (recommended) or Vault — not pack vars in production |
 
 ## Platform guides
 

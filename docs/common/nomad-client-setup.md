@@ -25,9 +25,9 @@ sudo mkdir -p /opt/nomad/data /opt/nomad/volumes
 sudo chown -R nomad:nomad /opt/nomad
 ```
 
-## 2. Docker (required for `runtime=docker`)
+## 2. Docker
 
-Install Docker Engine and enable the service when using `runtime=docker` or provision-mode Postgres. **Skip Docker** on dedicated production clients when using `runtime=binary` with BYODB — enable the **exec** driver instead.
+Install Docker Engine when using the Docker Nomad driver (`runtime=docker`) or colocated provision-mode Postgres (`database_mode=provision`).
 
 **Ubuntu / Debian:**
 
@@ -48,7 +48,7 @@ nomad node status -self | grep -i docker
 
 ## 2b. Exec driver (required for `runtime=binary`)
 
-When using `examples/production.byodb.binary.vars.hcl.example`, Nomatron runs as a host binary via the **exec** driver — Docker is not used for the Nomatron task.
+Nomatron runs as a host binary via the **exec** driver when **`runtime=binary`** with BYODB — Docker is not used for the Nomatron task itself.
 
 Enable in client config (see [nomad-client.hcl.example](nomad-client.hcl.example)):
 
@@ -58,7 +58,7 @@ plugin "exec" {
 }
 ```
 
-Install Nomatron on the client before deploy (apt from [packages.nomatron.io](https://packages.nomatron.io/apt) or tarball) and set `binary_path` in your vars file to match.
+For **production binary**, install Nomatron on the client before deploy and set `binary_path` in your vars file. The pack can download release tarballs when `binary_install_method=artifact` (client needs outbound HTTPS to GitHub Releases).
 
 ```bash
 nomad node status -self -verbose | grep -i exec
@@ -66,7 +66,7 @@ nomad node status -self -verbose | grep -i exec
 
 ## 3. CNI plugins (required for `network_mode=bridge`)
 
-The pack defaults to bridge networking for production Linux deployments.
+Required for `database_mode=provision` and most production Linux jobs using `network_mode=bridge`.
 
 ```bash
 CNI_VERSION=v1.6.0

@@ -1,0 +1,64 @@
+# Production — secrets in Nomad Variables (recommended when Vault is not available).
+#
+#   nomad var put nomad/jobs/nomatron/nomatron-server/nomatron \
+#     encryption_key="$(openssl rand -base64 32)" \
+#     license_key="YOUR-LICENSE-KEY" \
+#     cluster_key="YOUR-CLUSTER-KEY" \
+#     db_url="postgres://nomatron:SECRET@db-writer.example.com:5432/nomatron?sslmode=require"
+#
+#   cp examples/production.byodb.nomad-var.vars.hcl.example production.vars.hcl
+#   nomad-pack run -var-file=production.vars.hcl .
+
+deployment_profile   = "production"
+database_mode        = "byodb"
+network_mode         = "bridge"
+runtime              = "docker"
+count                = 1
+
+secrets_backend = "nomad_var"
+
+secrets_nomad_var = {
+  path = "nomad/jobs/nomatron/nomatron-server/nomatron"
+}
+
+load_balancer_mode = "none"
+register_service   = false
+http_port_static   = 4649
+
+node_pool = "nomatron"
+constraints = [
+  { attribute = "${meta.nomatron}", operator = "=", value = "true" }
+]
+
+public_hostname = "nomatron.example.com"
+public_scheme   = "https"
+
+database = {
+  host                       = "db-writer.example.com"
+  port                       = 5432
+  name                       = "nomatron"
+  username                   = "nomatron"
+  sslmode                    = "require"
+  connection_string          = ""
+  password                   = ""
+  max_open_conns             = 25
+  max_idle_conns             = 10
+  conn_max_lifetime_seconds  = 300
+  conn_max_idle_time_seconds = 60
+}
+
+server = {
+  port                          = 4649
+  api_addr                      = "https://nomatron.example.com"
+  trusted_origins               = ["https://nomatron.example.com"]
+  log_level                     = "info"
+  log_format                    = "json"
+  read_header_timeout_seconds   = 10
+  read_timeout_seconds          = 30
+  write_timeout_seconds         = 60
+  idle_timeout_seconds          = 120
+  tls_enabled                   = false
+  tls_cert_file                 = ""
+  tls_key_file                  = ""
+  tls_ca_file                   = ""
+}

@@ -27,10 +27,24 @@ Traefik job : [[ var "traefik.job_name" . ]](HTTP port [[ var "traefik.http_port
 ---Post-deploy runbook - --
 
 Secrets(must stay stable for this environment) :
-[] encryption_key — same value for all redeploys sharing this database
-[] license_key, cluster_key — match your license / other environments
+[[- $secretsBackend := var "secrets_backend" . -]]
+[[- if eq $secretsBackend "pack_vars" ]]
+[] encryption_key, license_key, cluster_key — in vars file ; same values on every redeploy
+[[- else if eq $secretsBackend "nomad_var" ]]
+[] Nomad Variable at [[ var "secrets_nomad_var.path" . ]] — encryption_key, license_key, cluster_key, db_url[[ if gt (var "count" .) 1 ]], serf_encrypt_key[[ end ]]
+[[- else ]]
+[] Vault secret at [[ var "secrets_vault.path" . ]] — encryption_key, license_key, cluster_key, db_url[[ if gt (var "count" .) 1 ]], serf_encrypt_key[[ end ]]
+[[- end ]]
 [[- if gt (var "count" .) 1 ]]
+[[- if eq $secretsBackend "pack_vars" ]]
 [] serf.encrypt_key — identical on every Nomatron server
+[[- end ]]
+[[- end ]]
+[[- if and (eq (var "deployment_profile" .) "ha") (eq (var "database_mode" .) "byodb") ]]
+[] HA database init — run once before all servers serve traffic :
+-Option A : complete / ui / setup on the first healthy node after one server starts
+-Option B : nomad alloc exec < first-alloc > nomatron database init - -config $ NOMAD_TASK_DIR / config / nomatron.hcl
+bootstrap.auto_init_database only runs for count = 1 ; do not enable it for HA
 [[- end ]]
 
 Database :
@@ -38,10 +52,11 @@ Database :
 [] Writer endpoint reachable from every Nomatron allocation
 [] TLS enabled(sslmode = require or stricter)
 [] Pool size : count([[ var "count" . ]]) × max_open_conns < Postgres max_connections
-[[- else ]]
-[] Lab provision only — migrate to BYODB before production
-[[- end ]]
 [] Initialize via / ui / setup or bootstrap.auto_init_database(first boot only)
+[[- else if eq (var "database_mode" .) "provision" ]]
+[] Lab provision only — migrate to BYODB before production
+[] Initialize via / ui / setup or bootstrap.auto_init_database(first boot only)
+[[- end ]]
 
 Nomatron :
 [] server.api_addr matches the URL users and webhooks use

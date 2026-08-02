@@ -4,17 +4,16 @@ job [[ template "job_name" . ]] {
   [[ template "region" . ]]
   datacenters = [[ var "datacenters" . | toStringList ]]
   namespace   = [[ var "namespace" . | quote ]]
-  node_pool   = [[ var "node_pool" . | quote ]]
   type        = "service"
 
-  [[- if gt (len (var "constraints" .)) 0 ]]
-  [[ template "constraints" (var "constraints" .) ]]
-  [[- end ]]
+[[ template "job_placement" . ]]
 
   [[- if eq (var "database_mode" .) "provision" ]]
   [[- if eq (var "count" .) 1 ]]
   group "nomatron" {
     count = 1
+
+[[ template "group_vault_block" . ]]
 
 [[ template "group_network" . ]]
 
@@ -70,6 +69,8 @@ job [[ template "job_name" . ]] {
       weight    = 100
     }
 
+[[ template "group_vault_block" . ]]
+
 [[ template "group_network" . ]]
 
     [[- $lbMode := var "load_balancer_mode" . -]]
@@ -104,6 +105,8 @@ job [[ template "job_name" . ]] {
       weight    = 100
     }
     [[- end ]]
+
+[[ template "group_vault_block" . ]]
 
 [[ template "group_network" . ]]
 
@@ -152,7 +155,7 @@ job [[ template "job_name" . ]] {
       }
 
       config {
-        command = "${NOMAD_ALLOC_DIR}/local/bin/nomatron"
+        command = "[[ template "binary_artifact_command" . ]]"
         args    = ["database", "init", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
       }
       [[- else ]]
@@ -171,17 +174,20 @@ server {
   api_addr = [[ if ne (var "server.api_addr" .) "" ]][[ var "server.api_addr" . | quote ]][[ else ]][[ printf "http://127.0.0.1:%v" (var "server.port" .) | quote ]][[ end ]]
 }
 database {
-  connection_string = [[ if ne (var "database.connection_string" .) "" ]][[ var "database.connection_string" . | quote ]][[ else ]][[ printf "postgres://%s:%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.password" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]][[ end ]]
+[[ template "nomatron_database_connection_hcl" . ]]
 }
 EOH
         destination = "local/config/nomatron.hcl"
       }
 
+[[ template "nomatron_secrets_env_template" . ]]
       env {
+[[- if eq (var "secrets_backend" .) "pack_vars" ]]
         NOMATRON_ENCRYPTION_KEY = [[ var "secrets.encryption_key" . | quote ]]
         NOMATRON_LICENSE_KEY    = [[ var "secrets.license_key" . | quote ]]
         NOMATRON_CLUSTER_KEY    = [[ var "secrets.cluster_key" . | quote ]]
-        NOMATRON_DB_URL         = [[ if ne (var "database.connection_string" .) "" ]][[ var "database.connection_string" . | quote ]][[ else ]][[ printf "postgres://%s:%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.password" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]][[ end ]]
+[[ template "nomatron_db_url_env_pack_vars" . ]]
+[[- end ]]
       }
 
       resources {

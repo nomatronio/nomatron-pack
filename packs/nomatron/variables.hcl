@@ -9,7 +9,7 @@ variable "deployment_profile" {
 }
 
 variable "database_mode" {
-  description = "Database strategy: byodb (production — connect to HA PostgreSQL writer endpoint) or provision (demo/lab only)."
+  description = "Database strategy: byodb (production — HA PostgreSQL writer) or provision (lab — colocated Postgres task). To try Nomatron without Nomad, run: nomatron server --dev"
   type        = string
   default     = "provision"
 }
@@ -23,7 +23,7 @@ variable "runtime" {
 variable "load_balancer_mode" {
   description = "Load balancer integration: none (direct access), service (register with Nomad/Consul for Traefik/Fabio), or traefik (also deploy a Traefik system job)."
   type        = string
-  default     = "service"
+  default     = "none"
 }
 
 variable "nomatron_version" {
@@ -83,7 +83,7 @@ variable "constraints" {
 }
 
 variable "network_mode" {
-  description = "Group network mode. Use bridge (default, requires Linux CNI plugins) for colocated Postgres or shared task networking. Use standard for macOS dev mode with BYODB (ports only, no bridge CNI)."
+  description = "Group network mode. Use bridge (default, requires Linux CNI plugins) for colocated Postgres or shared task networking. Use standard for macOS BYODB (ports only, no bridge CNI)."
   type        = string
   default     = "bridge"
 }
@@ -338,8 +338,14 @@ variable "bootstrap" {
   }
 }
 
+variable "secrets_backend" {
+  description = "How sensitive values reach the task: pack_vars (rendered into the job spec — dev/homelab only), nomad_var (Nomad Variables at runtime — recommended for production), or vault (HashiCorp Vault KV at runtime)."
+  type        = string
+  default     = "pack_vars"
+}
+
 variable "secrets" {
-  description = "Required secrets. Pass via -var at deploy time; never commit real values."
+  description = "Secrets when secrets_backend=pack_vars. Pass via -var-file at deploy time; never commit real values. For production, prefer secrets_backend=nomad_var or vault so values are not stored in the Nomad job specification."
   type = object({
     encryption_key = string
     license_key    = string
@@ -349,6 +355,60 @@ variable "secrets" {
     encryption_key = ""
     license_key    = ""
     cluster_key    = ""
+  }
+}
+
+variable "secrets_nomad_var" {
+  description = "Nomad Variable path and key names when secrets_backend=nomad_var. Default path follows Nomad's job-scoped convention: nomad/jobs/<job>/<group>/<task>."
+  type = object({
+    path = string
+    keys = object({
+      encryption_key   = string
+      license_key      = string
+      cluster_key      = string
+      db_url           = string
+      serf_encrypt_key = string
+      root_password    = string
+    })
+  })
+  default = {
+    path = ""
+    keys = {
+      encryption_key   = "encryption_key"
+      license_key      = "license_key"
+      cluster_key      = "cluster_key"
+      db_url           = "db_url"
+      serf_encrypt_key = "serf_encrypt_key"
+      root_password    = "root_password"
+    }
+  }
+}
+
+variable "secrets_vault" {
+  description = "Vault KV v2 settings when secrets_backend=vault. path is the full secret path (for example secret/data/nomatron/production). keys map Nomad env / config field names to Vault data keys."
+  type = object({
+    policies = list(string)
+    path     = string
+    keys = object({
+      encryption_key   = string
+      license_key      = string
+      cluster_key      = string
+      db_url           = string
+      serf_encrypt_key = string
+      root_password    = string
+    })
+  })
+  default = {
+    policies = ["nomatron"]
+    path     = ""
+    keys = {
+      encryption_key   = "encryption_key"
+      license_key      = "license_key"
+      cluster_key      = "cluster_key"
+      db_url           = "db_url"
+      serf_encrypt_key = "serf_encrypt_key"
+      root_password    = "root_password"
+    }
   }
 }
 
@@ -380,7 +440,7 @@ variable "public_scheme" {
 variable "register_service" {
   description = "Register a Nomad service for Nomatron when load_balancer_mode is service or traefik."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "service_name" {
