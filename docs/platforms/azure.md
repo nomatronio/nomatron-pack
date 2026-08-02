@@ -77,7 +77,7 @@ client {
 
 Restart Nomad: `sudo systemctl restart nomad`
 
-Match pack vars ([dedicated-nodes.vars.hcl.example](../../packs/nomatron/examples/dedicated-nodes.vars.hcl.example)):
+Match pack vars ([dedicated-nodes.vars.hcl.example](../../examples/dedicated-nodes.vars.hcl.example)):
 
 ```hcl
 node_pool = "nomatron"

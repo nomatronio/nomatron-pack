@@ -9,7 +9,7 @@ Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron N
 1. Choose a [deployment profile](../packs/nomatron/README.md#deployment-profiles): `production`, `ha`, or `quickstart`.
 2. Read the **shared guides** below — especially if you are new to Nomad placement or load balancing.
 3. Follow your **platform guide**.
-4. Deploy the pack with the matching [example vars](../packs/nomatron/examples/) plus [dedicated-nodes.vars.hcl.example](../packs/nomatron/examples/dedicated-nodes.vars.hcl.example) for production.
+4. Deploy the pack with the matching [example vars](../examples/) plus [dedicated-nodes.vars.hcl.example](../examples/dedicated-nodes.vars.hcl.example) for production.
 
 ## Shared guides (read these)
 
@@ -36,8 +36,8 @@ Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron N
 | File | Purpose |
 |---|---|
 | [common/nomad-client.hcl.example](common/nomad-client.hcl.example) | Dedicated client config with `node_pool` + `meta` |
-| [dedicated-nodes.vars.hcl.example](../packs/nomatron/examples/dedicated-nodes.vars.hcl.example) | Matching pack vars (`node_pool`, `constraints`) |
-| [nomad-client-host-volume.hcl.example](../packs/nomatron/examples/nomad-client-host-volume.hcl.example) | Host volume for provision-mode Postgres (lab) |
+| [dedicated-nodes.vars.hcl.example](../examples/dedicated-nodes.vars.hcl.example) | Matching pack vars (`node_pool`, `constraints`) |
+| [nomad-client-host-volume.hcl.example](../examples/nomad-client-host-volume.hcl.example) | Host volume for provision-mode Postgres (lab) |
 
 ## Architecture reminder
 

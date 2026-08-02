@@ -95,20 +95,22 @@ nomad-pack registry list
 
 ### 4. Create your variables file
 
-Example files live in [`examples/`](examples/). **Copy** one to a `*.vars.hcl` file and edit it — nomad-pack only accepts `.hcl` or `.json` var files (not `.example`):
+Example var files live in the [nomatron-pack repository](https://github.com/nomatronio/nomatron-pack/tree/main/examples) (`examples/` at repo root — not inside the cached pack). **Clone the repo**, copy one to a `*.vars.hcl` file, and edit it:
 
 ```bash
-cp examples/production.byodb.vars.hcl.example production.vars.hcl
+git clone https://github.com/nomatronio/nomatron-pack.git
+cd nomatron-pack/packs/nomatron
+cp ../../examples/production.byodb.vars.hcl.example production.vars.hcl
 # Edit: database writer URL, secrets, public_hostname, node_pool, constraints
 ```
 
 | Profile | Start from |
 |---|---|
-| Production (single node + BYODB, Docker) | `examples/production.byodb.vars.hcl.example` |
-| Production (single node + BYODB, binary/exec) | `examples/production.byodb.binary.vars.hcl.example` |
-| HA (3+ servers + BYODB) | `examples/ha.byodb.vars.hcl.example` |
-| Lab / demo (provisioned Postgres) | `examples/provision.vars.hcl.example` |
-| Dedicated client placement | merge `examples/dedicated-nodes.vars.hcl.example` |
+| Production (single node + BYODB, Docker) | [production.byodb.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/production.byodb.vars.hcl.example) |
+| Production (single node + BYODB, binary/exec) | [production.byodb.binary.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/production.byodb.binary.vars.hcl.example) |
+| HA (3+ servers + BYODB) | [ha.byodb.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/ha.byodb.vars.hcl.example) |
+| Lab / demo (provisioned Postgres) | [provision.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/provision.vars.hcl.example) |
+| Dedicated client placement | merge [dedicated-nodes.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/dedicated-nodes.vars.hcl.example) |
 
 Inspect all variables and defaults:
 
@@ -156,7 +158,7 @@ Pack outputs (URLs, next steps) print to the terminal after a successful `run`. 
 Production:
 
 ```bash
-cp examples/production.byodb.vars.hcl.example production.vars.hcl
+cp ../../examples/production.byodb.vars.hcl.example production.vars.hcl
 # Edit database writer URL, secrets, public_hostname / api_addr
 nomad-pack plan --var-file=production.vars.hcl .
 nomad-pack run  --var-file=production.vars.hcl .
@@ -165,7 +167,7 @@ nomad-pack run  --var-file=production.vars.hcl .
 HA:
 
 ```bash
-cp examples/ha.byodb.vars.hcl.example ha.vars.hcl
+cp ../../examples/ha.byodb.vars.hcl.example ha.vars.hcl
 # Edit database writer URL, serf.retry_join, secrets
 nomad-pack plan --var-file=ha.vars.hcl .
 nomad-pack run  --var-file=ha.vars.hcl .
@@ -197,14 +199,14 @@ Nomatron HA is **horizontal** (multiple Nomatron servers + Serf). PostgreSQL HA 
 
 | Profile | Example vars file | Postgres | Nomatron | Use when |
 |---|---|---|---|---|
-| **`quickstart`** | `examples/provision.vars.hcl.example` | Provisioned, colocated (`count=1`) or lab HA (`count>1`) | 1 or more | First eval, homelab, demos |
-| **`production`** | `examples/production.byodb.vars.hcl.example` | **BYODB** — HA writer URL, TLS | 1 server (Docker) | Production single-node, container runtime OK |
-| **`production`** (binary) | `examples/production.byodb.binary.vars.hcl.example` | **BYODB** | 1 server (exec) | Production single-node, **no Docker** for Nomatron |
-| **`ha`** | `examples/ha.byodb.vars.hcl.example` | **BYODB** — shared writer URL, TLS | 3+ servers, spread, Serf | Production Nomatron HA |
+| **`quickstart`** | [provision.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/provision.vars.hcl.example) | Provisioned, colocated (`count=1`) or lab HA (`count>1`) | 1 or more | First eval, homelab, demos |
+| **`production`** | [production.byodb.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/production.byodb.vars.hcl.example) | **BYODB** — HA writer URL, TLS | 1 server (Docker) | Production single-node, container runtime OK |
+| **`production`** (binary) | [production.byodb.binary.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/production.byodb.binary.vars.hcl.example) | **BYODB** | 1 server (exec) | Production single-node, **no Docker** for Nomatron |
+| **`ha`** | [ha.byodb.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/ha.byodb.vars.hcl.example) | **BYODB** — shared writer URL, TLS | 3+ servers, spread, Serf | Production Nomatron HA |
 
 Set `deployment_profile` in your vars file. The pack **validates** profile constraints at render time (for example, `production` rejects provisioned Postgres).
 
-**Lab Nomatron HA without external Postgres:** use `examples/ha.provision-lab.vars.hcl.example` (`deployment_profile=quickstart`, `count>1`, provision mode) — explicitly not for production.
+**Lab Nomatron HA without external Postgres:** use [ha.provision-lab.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/ha.provision-lab.vars.hcl.example) (`deployment_profile=quickstart`, `count>1`, provision mode) — explicitly not for production.
 
 ### Decision guide
 
@@ -308,7 +310,7 @@ docker run -d --name nomatron-postgres \
 3. Copy the example variables file, fill in secrets once, and start Nomad dev mode:
 
 ```bash
-cp examples/mac-dev.vars.hcl.example mac-dev.vars.hcl
+cp ../../examples/mac-dev.vars.hcl.example mac-dev.vars.hcl
 # Edit mac-dev.vars.hcl — set encryption_key, license_key, cluster_key
 
 nomad agent -dev
@@ -347,14 +349,14 @@ Dev mode on **Linux** still requires CNI for `network_mode=bridge` (including `d
 
 Provisioned Postgres is **not for production**. The reference architecture uses BYODB with `sslmode=require` and a writer endpoint that survives DB failover (managed HA or Patroni).
 
-See `examples/production.byodb.vars.hcl.example` and `examples/ha.byodb.vars.hcl.example`.
+See [production.byodb.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/production.byodb.vars.hcl.example) and [ha.byodb.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/ha.byodb.vars.hcl.example).
 
 ### BYODB connection
 
 Point at the **writer** endpoint — not a read replica. Nomatron uses a single connection string for all servers.
 
 ```bash
-cp examples/production.byodb.vars.hcl.example production.vars.hcl
+cp ../../examples/production.byodb.vars.hcl.example production.vars.hcl
 nomad-pack run -var-file=production.vars.hcl .
 ```
 
@@ -375,7 +377,7 @@ sudo mkdir -p /opt/nomad/volumes/nomatron-postgres
 sudo chown nomad:nomad /opt/nomad/volumes/nomatron-postgres
 ```
 
-Add to the client's `client` block (see `examples/nomad-client-host-volume.hcl.example`):
+Add to the client's `client` block (see [nomad-client-host-volume.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/nomad-client-host-volume.hcl.example)):
 
 ```hcl
 client {
@@ -398,7 +400,7 @@ nomad node status -verbose
 ### 2. Deploy
 
 ```bash
-cp examples/provision.vars.hcl.example provision.vars.hcl
+cp ../../examples/provision.vars.hcl.example provision.vars.hcl
 # edit provision.vars.hcl — secrets, node_pool if needed
 
 nomad-pack run -var-file=provision.vars.hcl .
@@ -432,7 +434,7 @@ For production, use `database_mode=byodb` with managed or dedicated Postgres ins
 Use the reference vars file — do not use `database_mode=provision` in production.
 
 ```bash
-cp examples/production.byodb.vars.hcl.example production.vars.hcl
+cp ../../examples/production.byodb.vars.hcl.example production.vars.hcl
 # Edit: database.connection_string (writer URL), secrets, server.api_addr / public_hostname
 nomad-pack run -var-file=production.vars.hcl .
 ```
@@ -448,7 +450,7 @@ nomad-pack run -var-file=production.vars.hcl -var load_balancer_mode=traefik .
 Nomatron HA = `deployment_profile=ha` + BYODB + `count≥3` + Serf. Postgres HA is your responsibility via the writer endpoint.
 
 ```bash
-cp examples/ha.byodb.vars.hcl.example ha.vars.hcl
+cp ../../examples/ha.byodb.vars.hcl.example ha.vars.hcl
 # Edit: database writer URL, serf.retry_join (one entry per node), serf.encrypt_key, secrets
 nomad-pack run -var-file=ha.vars.hcl .
 ```
@@ -464,7 +466,7 @@ nomatron keygen
 For evaluation only — **not** `deployment_profile=ha`:
 
 ```bash
-cp examples/ha.provision-lab.vars.hcl.example ha-lab.vars.hcl
+cp ../../examples/ha.provision-lab.vars.hcl.example ha-lab.vars.hcl
 nomad-pack run -var-file=ha-lab.vars.hcl .
 ```
 
@@ -491,7 +493,7 @@ Nomatron supports two runtimes. **Docker is the default** for quickstart and tea
 Uses `ghcr.io/nomatronio/nomatron-releases/nomatron:<version>`.
 
 ```bash
-cp examples/production.byodb.vars.hcl.example production.vars.hcl
+cp ../../examples/production.byodb.vars.hcl.example production.vars.hcl
 nomad-pack run --var-file=production.vars.hcl .
 ```
 
@@ -506,7 +508,7 @@ Or override:
 **Pre-installed binary** (recommended — install via [packages.nomatron.io](https://packages.nomatron.io/apt) or golden AMI before deploy):
 
 ```bash
-cp examples/production.byodb.binary.vars.hcl.example production.vars.hcl
+cp ../../examples/production.byodb.binary.vars.hcl.example production.vars.hcl
 # Install nomatron on each client, e.g.:
 #   curl -fsSL https://packages.nomatron.io/apt/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/nomatron.gpg
 #   echo "deb [signed-by=...] https://packages.nomatron.io/apt stable main" | sudo tee /etc/apt/sources.list.d/nomatron.list
@@ -535,7 +537,7 @@ binary_arch           = "amd64"   # or arm64
 nomatron_version      = "v0.1.0-rc.21"
 ```
 
-For HA with binary runtime, use `examples/ha.byodb.vars.hcl.example` and add the same `runtime` / `binary_*` settings.
+For HA with binary runtime, use [ha.byodb.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/ha.byodb.vars.hcl.example) and add the same `runtime` / `binary_*` settings.
 
 ## Load balancer
 
@@ -572,7 +574,7 @@ nomad-pack run -var load_balancer_mode=traefik -var-file=production.vars.hcl .
 | `secrets.cluster_key` | Nomatron cluster key (must match the value used when the license was issued / your other environments) |
 | `serf.encrypt_key` | Serf gossip encryption key (`nomatron keygen` or `openssl rand -base64 24`). Required when `count > 1`. Must be identical on every Nomatron node and stable across redeploys for that cluster. |
 
-Pass secrets via `-var-file` (recommended) or `-var` at deploy time. Do not commit real values. See `examples/production.byodb.vars.hcl.example` and `examples/mac-dev.vars.hcl.example`.
+Pass secrets via `-var-file` (recommended) or `-var` at deploy time. Do not commit real values. See [production.byodb.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/production.byodb.vars.hcl.example) and [mac-dev.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/blob/main/examples/mac-dev.vars.hcl.example).
 
 ### Keep secrets stable across redeploys
 
@@ -611,7 +613,7 @@ For **Mac dev with `count=1`**, the pack does not emit `serf.encrypt_key` — yo
 - `constraints` — job rules matching client `meta` (e.g. `${meta.nomatron} = true`)
 - `datacenters` — optional datacenter pin
 
-See [examples/dedicated-nodes.vars.hcl.example](examples/dedicated-nodes.vars.hcl.example).
+See [dedicated-nodes.vars.hcl.example](https://github.com/nomatronio/nomatron-pack/tree/main/examples/dedicated-nodes.vars.hcl.example).
 
 ### Server (`server` object)
 

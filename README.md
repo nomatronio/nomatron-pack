@@ -6,33 +6,37 @@ Official [Nomad Pack](https://developer.hashicorp.com/nomad/tools/nomad-pack) fo
 
 ```text
 nomatron-pack/
-├── packs/nomatron/     # Pack synced to community registry (templates, vars, examples, README)
-├── docs/               # Platform setup guides (repo only — not synced)
-├── CONTRIBUTING.md     # Maintainer workflow
+├── packs/nomatron/     # Synced to community registry (6 items only)
+│   ├── templates/
+│   ├── variables.hcl
+│   ├── metadata.hcl
+│   ├── outputs.tpl
+│   ├── README.md
+│   └── CHANGELOG.md
+├── docs/               # Platform setup guides (repo only)
+├── examples/           # Example var files (repo only)
+├── .ci/                # CI render fixtures (repo only)
+├── CONTRIBUTING.md
 ├── LICENSE
-└── .github/            # Validate + sync CI
+└── .github/
 ```
 
 | Path | Synced to community registry? |
 |---|---|
-| `packs/nomatron/` (templates, variables, metadata, outputs, README, CHANGELOG, examples, `.ci/`) | Yes — matches other registry packs |
-| `docs/` | No — extended AWS/Azure/GCP/Proxmox/OpenStack/VMware guides live here |
-| Repo root (CONTRIBUTING, workflows) | No |
+| `packs/nomatron/` | Yes — registry pack files only |
+| `docs/`, `examples/`, `.ci/` | No |
 
-**Pack README:** [packs/nomatron/README.md](packs/nomatron/README.md) — install, profiles, variables, deploy workflow. Links to platform docs in this repo.
+**Pack README:** [packs/nomatron/README.md](packs/nomatron/README.md)
 
-**Platform guides:** [docs/README.md](docs/README.md) — VM, firewall, Docker, CNI, load balancing, dedicated nodes.
+**Platform guides:** [docs/README.md](docs/README.md)
+
+**Example var files:** [examples/](examples/)
 
 ```bash
 git clone https://github.com/nomatronio/nomatron-pack.git
 cd nomatron-pack/packs/nomatron
-nomad-pack info .
-```
-
-Or from the default registry (after publish):
-
-```bash
-nomad-pack run nomatron --var-file=production.vars.hcl
+cp ../../examples/production.byodb.vars.hcl.example production.vars.hcl
+nomad-pack plan --var-file=production.vars.hcl .
 ```
 
 Maintainers: [CONTRIBUTING.md](CONTRIBUTING.md)

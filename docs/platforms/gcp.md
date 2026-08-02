@@ -72,7 +72,7 @@ client {
 }
 ```
 
-Pack vars: merge [dedicated-nodes.vars.hcl.example](../../packs/nomatron/examples/dedicated-nodes.vars.hcl.example).
+Pack vars: merge [dedicated-nodes.vars.hcl.example](../../examples/dedicated-nodes.vars.hcl.example).
 
 ## 6. Cloud SQL (BYODB)
 

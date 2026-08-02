@@ -129,7 +129,7 @@ nomad node status -self -json | jq '.Meta'
 
 ### 4b. Pack vars (when you deploy)
 
-In `production.vars.hcl` / `ha.vars.hcl`, set matching placement (see [examples/dedicated-nodes.vars.hcl.example](../../packs/nomatron/examples/dedicated-nodes.vars.hcl.example)):
+In `production.vars.hcl` / `ha.vars.hcl`, set matching placement (see [examples/dedicated-nodes.vars.hcl.example](../../examples/dedicated-nodes.vars.hcl.example)):
 
 ```hcl
 node_pool = "nomatron"
@@ -149,7 +149,7 @@ Full explanation: [dedicated-nodes-and-placement.md](dedicated-nodes-and-placeme
 
 ### Host volume (provision mode / lab only)
 
-If using `database_mode=provision`, register a host volume on clients that may run Postgres — see [../../examples/nomad-client-host-volume.hcl.example](../../packs/nomatron/examples/nomad-client-host-volume.hcl.example).
+If using `database_mode=provision`, register a host volume on clients that may run Postgres — see [../../examples/nomad-client-host-volume.hcl.example](../../examples/nomad-client-host-volume.hcl.example).
 
 Enable the **Docker** plugin (default in most installs). For **exec/binary** runtime, ensure the exec driver is enabled.
 

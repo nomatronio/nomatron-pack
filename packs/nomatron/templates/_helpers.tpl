@@ -49,7 +49,7 @@
 [[- end -]]
 [[- if eq $profile "ha" -]]
 [[- if ne $dbMode "byodb" -]]
-[[ fail "deployment_profile=ha requires database_mode=byodb. For lab Nomatron HA with provisioned Postgres, use deployment_profile=quickstart with count>1 (see examples/ha.provision-lab.vars.hcl.example)." ]]
+[[ fail "deployment_profile=ha requires database_mode=byodb. For lab Nomatron HA with provisioned Postgres, use deployment_profile=quickstart with count>1 (see https://github.com/nomatronio/nomatron-pack/blob/main/examples/ha.provision-lab.vars.hcl.example)." ]]
 [[- end -]]
 [[- if lt $count 2 -]]
 [[ fail "deployment_profile=ha requires count >= 2 (recommended: 3)." ]]

@@ -77,7 +77,7 @@ jobs:
       - name: nomad-pack render (CI var fixtures)
         run: |
           shopt -s nullglob
-          for var_file in packs/nomatron/.ci/vars-*.hcl; do
+          for var_file in .ci/vars-*.hcl; do
             echo "::group::render ${var_file}"
             nomad-pack render --var-file="${var_file}" packs/nomatron > /dev/null
             echo "::endgroup::"

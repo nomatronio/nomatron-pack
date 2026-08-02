@@ -11,7 +11,7 @@
 
 ### Changed
 
-- Repository layout: pack under `packs/nomatron/` matches community registry; platform guides moved to repo-root `docs/` (not synced).
+- Repository layout: synced pack contains registry files only; platform guides in repo-root `docs/`, example vars in repo-root `examples/`.
 - Default database pool limits: `max_open_conns=25`, `max_idle_conns=10`
 - `deployment_profile` now enforced at render time with profile-specific validation
 

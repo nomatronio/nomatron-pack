@@ -10,11 +10,9 @@ if [[ ! -d "$SOURCE_DIR" ]]; then
   exit 1
 fi
 
-# Match hashicorp/nomad-pack-community-registry pack layout (see hello_world, traefik).
+# Registry pack layout only — templates/, CHANGELOG.md, README.md, metadata.hcl, outputs.tpl, variables.hcl
 PACK_ITEMS=(
   templates
-  examples
-  .ci
   CHANGELOG.md
   README.md
   metadata.hcl

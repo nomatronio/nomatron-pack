@@ -1,3 +1,4 @@
-# Local variable files with secrets — copy from packs/nomatron/examples/*.example
+# Local variable files with secrets — copy from examples/*.example
+*.vars.hcl
+!examples/*.example
 packs/nomatron/*.vars.hcl
-!packs/nomatron/examples/*.example
