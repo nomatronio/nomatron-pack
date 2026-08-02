@@ -46,6 +46,7 @@ Related vars:
 | `public_hostname` | DNS name users type (e.g. `nomatron.example.com`) |
 | `public_scheme` | `https` when TLS terminates at LB or Traefik |
 | `server.api_addr` | Full URL Nomatron uses in links/OAuth callbacks — usually `https://nomatron.example.com` |
+| `server.trusted_origins` | Browser origins allowed for CSRF (UI login/forms) — usually `["https://nomatron.example.com"]` |
 | `server.tls_enabled` | `false` when TLS terminates at LB/Traefik; `true` when Nomatron terminates TLS |
 
 ## Option A — Cloud load balancer (ALB, App Gateway, GLB, Octavia)
@@ -72,9 +73,10 @@ public_hostname = "nomatron.example.com"
 public_scheme   = "https"
 
 server = {
-  port        = 4649
-  api_addr    = "https://nomatron.example.com"
-  tls_enabled = false   # TLS terminates at ALB
+  port             = 4649
+  api_addr         = "https://nomatron.example.com"
+  trusted_origins  = ["https://nomatron.example.com"]
+  tls_enabled      = false   # TLS terminates at ALB
 }
 ```
 
@@ -117,8 +119,9 @@ public_hostname = "nomatron.example.com"
 public_scheme   = "https"
 
 server = {
-  api_addr    = "https://nomatron.example.com"
-  tls_enabled = false   # Traefik terminates TLS
+  api_addr        = "https://nomatron.example.com"
+  trusted_origins = ["https://nomatron.example.com"]
+  tls_enabled     = false   # Traefik terminates TLS
 }
 ```
 
@@ -130,7 +133,7 @@ traefik.http.routers.nomatron.rule=Host(`nomatron.example.com`)
 traefik.http.services.nomatron.loadbalancer.server.port=4649
 ```
 
-**Fabio:** Fabio uses different tag conventions. Set custom `service_tags` in your vars file per [Fabio route tags](https://fabiolb.net/feature/route-tags/).
+**Fabio:** Fabio uses different tag conventions. Set custom `service_tags` in your vars file per [Fabio route tags](https://fabiolb.net/feature/route-tags/). The Fabio route hostname must match an entry in `server.trusted_origins`.
 
 **Do not also point ALB at 4649 on every node** unless Traefik listens there — pick Traefik *or* direct ALB, not both to Nomatron tasks.
 
@@ -153,7 +156,16 @@ load_balancer_mode = "traefik"
 register_service   = true
 
 public_hostname = "nomatron.example.com"
+public_scheme   = "https"
+
+server = {
+  api_addr        = "https://nomatron.example.com"
+  trusted_origins = ["https://nomatron.example.com"]
+  tls_enabled     = false
+}
 ```
+
+The pack’s Traefik job listens on **HTTP port 80** by default. Use `http://…` in `trusted_origins` until you configure HTTPS on Traefik (or place a cloud LB in front).
 
 Deploy:
 
@@ -212,8 +224,34 @@ GET /api/v1/health?bootstrap=ok
 
 Configure this path on ALB target groups, Traefik, and Nomad service checks (automatic in **`service`** / **`traefik`** modes).
 
+## TLS, api_addr, and CSRF
+
+Nomatron listens HTTP on **4649** inside the task when `server.tls_enabled = false` (production default). TLS terminates at the **load balancer or Traefik/Fabio**. Postgres TLS is separate — use `database.sslmode = require` for production/HA (enforced by the pack).
+
+Set these to the **public URL users type in the browser** (scheme + hostname):
+
+| Variable | Purpose |
+|---|---|
+| `server.api_addr` | Links, OAuth callbacks, webhooks |
+| `server.trusted_origins` | CSRF allowlist for the web UI (`Origin` / `Referer` on POSTs) |
+| `public_hostname` | Traefik `Host()` router tag (when using default `service_tags`) |
+
+```text
+Browser  Origin: https://nomatron.example.com
+    →  ALB / Traefik / Fabio  (TLS here)
+    →  client :4649 HTTP  →  Nomatron
+```
+
+**Traefik (`service` or `traefik` mode):** `public_hostname` drives `Host(\`…\`)` in service tags. It must match `trusted_origins` (same hostname; same `http` vs `https` as the browser URL). Mismatch causes CSRF errors on login even when routing works.
+
+**Fabio:** configure `service_tags` so the public hostname matches `trusted_origins`.
+
+**Pack Traefik:** bundled Traefik is HTTP :80 only until you add TLS. Match `trusted_origins` to what users actually browse.
+
+**Multiple URLs:** add each origin, e.g. `["https://nomatron.example.com", "https://nomatron.internal.corp.example.com"]`.
+
 ## Related docs
 
 - [Ports and firewall](ports-and-firewall.md) — which ports to open for each mode
 - [Dedicated nodes](dedicated-nodes-and-placement.md) — node pools and constraints
-- [Platform guides](../packs/nomatron/README.md) — cloud-specific LB setup steps
+- [Platform guides](../../packs/nomatron/README.md) — pack profiles and example vars

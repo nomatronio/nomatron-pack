@@ -143,7 +143,7 @@ variable "server" {
   type = object({
     port                        = number
     api_addr                    = string
-    trusted_origins             = list(string)
+    trusted_origins             = list(string) # CSRF allowlist — full origins with scheme, e.g. https://nomatron.example.com
     log_level                   = string
     log_format                  = string
     read_header_timeout_seconds = number

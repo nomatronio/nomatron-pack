@@ -496,6 +496,62 @@ See [load balancing guide](https://github.com/nomatronio/nomatron-pack/tree/main
 
 **Cloud production default:** ALB → each client on **4649** — no Traefik required.
 
+### TLS
+
+Nomatron listens **HTTP on 4649** inside the task (`server.tls_enabled = false` in production examples). User-facing TLS terminates **in front** of Nomatron:
+
+| Layer | Who terminates TLS | Pack setting |
+|---|---|---|
+| Edge (ALB, Traefik, Fabio, nginx) | Load balancer / reverse proxy | `server.tls_enabled = false` |
+| Nomatron process | Nomatron itself (uncommon with LB) | `server.tls_enabled = true` + cert paths |
+| PostgreSQL | Your database | `database.sslmode = "require"` (enforced for `production` / `ha`) |
+
+Set **`server.api_addr`** and **`public_scheme` / `public_hostname`** to the **HTTPS URL users type**, even when Nomatron only speaks HTTP on 4649:
+
+```hcl
+public_hostname = "nomatron.example.com"
+public_scheme   = "https"
+
+server = {
+  api_addr        = "https://nomatron.example.com"
+  trusted_origins = ["https://nomatron.example.com"]
+  tls_enabled     = false   # TLS at LB or Traefik
+}
+```
+
+Advanced: set `server.tls_enabled = true` and `tls_cert_file` / `tls_key_file` when Nomatron terminates TLS directly (no LB). The pack does not mount certificates — you provide paths on the client.
+
+### CSRF and `trusted_origins`
+
+Nomatron validates CSRF on browser requests (login, UI forms) using **`server.trusted_origins`**. Each entry must be a full origin **with scheme** — the URL in the browser address bar, not the internal `http://client:4649` hop.
+
+```text
+Browser  Origin: https://nomatron.example.com
+    →  ALB / Traefik / Fabio (TLS terminates)
+    →  Nomad client :4649 HTTP  →  Nomatron checks trusted_origins
+```
+
+**Cloud LB (`load_balancer_mode = none`):** same as above — `trusted_origins` is the public HTTPS origin; ALB forwards HTTP to :4649.
+
+**Traefik or Fabio (`load_balancer_mode = service`):**
+
+- TLS terminates at Traefik/Fabio; Nomatron stays `tls_enabled = false`.
+- Default Traefik tags use `Host(\`public_hostname\`)` — must match `trusted_origins` (e.g. both `nomatron.example.com`, not `www.` on one and not the other).
+- **Fabio:** set `service_tags` per [Fabio route tags](https://fabiolb.net/feature/route-tags/); the routed hostname must match `trusted_origins`.
+
+**Pack Traefik (`load_balancer_mode = traefik`):** the bundled Traefik job exposes **HTTP on port 80** only. If users browse `http://…`, include `http://…` in `trusted_origins`; if you add HTTPS to Traefik (or ALB in front), use `https://…` instead.
+
+**Common CSRF failures:**
+
+| Cause | Fix |
+|---|---|
+| `trusted_origins` missing or empty in production | Add the public origin(s) |
+| `https://` in vars but users hit `http://` (or vice versa) | Match scheme to the browser URL |
+| Traefik `Host()` tag ≠ hostname users type | Align `public_hostname`, router tags, and `trusted_origins` |
+| `api_addr` is HTTPS but `trusted_origins` omitted | Set both to the same public URL |
+
+Multiple public URLs (corp + external): list every origin in `trusted_origins`.
+
 ---
 
 ## Required secrets
@@ -503,11 +559,23 @@ See [load balancing guide](https://github.com/nomatronio/nomatron-pack/tree/main
 | Variable | Description |
 |---|---|
 | `secrets.encryption_key` | `openssl rand -base64 32` — stable for the lifetime of a database |
-| `secrets.license_key` | Nomatron license key |
-| `secrets.cluster_key` | Must match your license / other environments |
+| `secrets.license_key` | Nomatron license key (see below) |
+| `secrets.cluster_key` | Issued with your license — must match across all Nomatron servers in the environment |
 | `serf.encrypt_key` | `nomatron keygen` — required when `count > 1`, identical on all nodes |
 
-Generate once, save in your vars file, reuse on every deploy. Do not commit real values.
+### Getting a license key
+
+Nomatron is in **private beta**. You need a license key and matching `cluster_key` before the server will start in connected licensing mode (the pack default).
+
+1. **Request early access** at [nomatron.io](https://nomatron.io) — use **Get early access** on the homepage.
+2. After approval, Nomatron will provide your **`license_key`** and **`cluster_key`** for `secrets` in your vars file.
+3. Set both in every example block above (replace `REPLACE-WITH-YOUR-LICENSE-KEY` and use the issued `cluster_key` — do not use a placeholder like `dev`).
+
+A placeholder `cluster_key` will fail connected licensing even with a valid license key. Use the values issued for your environment.
+
+More on licensing during beta: [Nomatron FAQ](https://nomatron.io/faq).
+
+Generate `encryption_key` and `serf.encrypt_key` yourself; save all secrets in your vars file and reuse on every deploy. Do not commit real values.
 
 ---
 
@@ -563,7 +631,7 @@ Full platform guides: [docs](https://github.com/nomatronio/nomatron-pack/tree/ma
 - Use BYODB with TLS (`sslmode=require`) in production
 - Do not use provisioned Postgres outside demo/lab
 - Keep encryption keys in a secret manager; HA nodes share the same key
-- Set `server.api_addr` to the URL users and webhooks use
+- Set `server.api_addr` and `server.trusted_origins` to the URL users browse (see [TLS](#tls) and [CSRF](#csrf-and-trusted_origins))
 
 ---
 
