@@ -106,7 +106,7 @@ client {
 }
 ```
 
-Merge [dedicated-nodes.vars.hcl.example](../../examples/dedicated-nodes.vars.hcl.example) into your pack vars.
+Merge [dedicated-nodes.vars.hcl.example](../../packs/nomatron/examples/dedicated-nodes.vars.hcl.example) into your pack vars.
 
 ## 6. PostgreSQL (BYODB)
 

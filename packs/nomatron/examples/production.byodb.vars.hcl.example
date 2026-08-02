@@ -8,7 +8,7 @@ deployment_profile   = "production"
 database_mode        = "byodb"
 network_mode         = "bridge"
 
-# Cloud LB (ALB, App Gateway, GLB): no Traefik — see docs/common/load-balancing.md
+# Cloud LB (ALB, App Gateway, GLB): no Traefik — see https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/load-balancing.md
 load_balancer_mode   = "none"
 register_service     = false
 http_port_static     = 4649

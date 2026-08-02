@@ -1,5 +1,5 @@
 # Merge into /etc/nomad.d/client.hcl (paths vary by install).
-# See docs/common/dedicated-nodes-and-placement.md for node_pool, meta, and constraints.
+# See https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/dedicated-nodes-and-placement.md
 
 client {
   enabled = true

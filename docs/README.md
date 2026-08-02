@@ -1,15 +1,15 @@
 # Nomatron on Nomad — platform setup guides
 
-Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron Nomad pack](../README.md). These guides cover VM creation, networking, firewall rules, Nomad client placement (node pools, metadata, constraints), load balancing choices, and client software (Docker, CNI, Nomad).
+Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron Nomad pack](../packs/nomatron/README.md). These guides cover VM creation, networking, firewall rules, Nomad client placement (node pools, metadata, constraints), load balancing choices, and client software (Docker, CNI, Nomad).
 
-**Deploying the pack:** see [Install and use nomad-pack](../README.md#install-and-use-nomad-pack) in the main README (CLI install, clone vs registry, `plan` / `run`).
+**Deploying the pack:** see [Install and use nomad-pack](../packs/nomatron/README.md#install-and-use-nomad-pack) in the pack README (CLI install, clone vs registry, `plan` / `run`).
 
 ## Before you start
 
-1. Choose a [deployment profile](../README.md#deployment-profiles): `production`, `ha`, or `quickstart`.
+1. Choose a [deployment profile](../packs/nomatron/README.md#deployment-profiles): `production`, `ha`, or `quickstart`.
 2. Read the **shared guides** below — especially if you are new to Nomad placement or load balancing.
 3. Follow your **platform guide**.
-4. Deploy the pack with the matching [example vars](../examples/) plus [dedicated-nodes.vars.hcl.example](../examples/dedicated-nodes.vars.hcl.example) for production.
+4. Deploy the pack with the matching [example vars](../packs/nomatron/examples/) plus [dedicated-nodes.vars.hcl.example](../packs/nomatron/examples/dedicated-nodes.vars.hcl.example) for production.
 
 ## Shared guides (read these)
 
@@ -36,8 +36,8 @@ Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron N
 | File | Purpose |
 |---|---|
 | [common/nomad-client.hcl.example](common/nomad-client.hcl.example) | Dedicated client config with `node_pool` + `meta` |
-| [../examples/dedicated-nodes.vars.hcl.example](../examples/dedicated-nodes.vars.hcl.example) | Matching pack vars (`node_pool`, `constraints`) |
-| [../examples/nomad-client-host-volume.hcl.example](../examples/nomad-client-host-volume.hcl.example) | Host volume for provision-mode Postgres (lab) |
+| [dedicated-nodes.vars.hcl.example](../packs/nomatron/examples/dedicated-nodes.vars.hcl.example) | Matching pack vars (`node_pool`, `constraints`) |
+| [nomad-client-host-volume.hcl.example](../packs/nomatron/examples/nomad-client-host-volume.hcl.example) | Host volume for provision-mode Postgres (lab) |
 
 ## Architecture reminder
 

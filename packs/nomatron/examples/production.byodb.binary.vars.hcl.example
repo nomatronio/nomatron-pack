@@ -13,7 +13,7 @@
 #   - Install Nomatron on each dedicated client (apt or tarball) at binary_path
 #   - Enable Nomad exec driver; Docker is NOT required for this profile
 #   - CNI plugins still required for network_mode=bridge
-#   - See docs/common/dedicated-nodes-and-placement.md
+#   - See https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/dedicated-nodes-and-placement.md
 
 deployment_profile = "production"
 database_mode      = "byodb"

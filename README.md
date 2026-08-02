@@ -2,16 +2,26 @@
 
 Official [Nomad Pack](https://developer.hashicorp.com/nomad/tools/nomad-pack) for deploying [Nomatron](https://nomatron.io) on HashiCorp Nomad.
 
-This repository follows the same layout as the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry): the pack lives under **`packs/nomatron/`** and is copied verbatim to the community registry on release.
+## Repository layout
 
-| Path | Purpose |
+```text
+nomatron-pack/
+├── packs/nomatron/     # Pack synced to community registry (templates, vars, examples, README)
+├── docs/               # Platform setup guides (repo only — not synced)
+├── CONTRIBUTING.md     # Maintainer workflow
+├── LICENSE
+└── .github/            # Validate + sync CI
+```
+
+| Path | Synced to community registry? |
 |---|---|
-| [`packs/nomatron/`](packs/nomatron/) | **The pack** — templates, variables, examples, platform docs (synced to community registry) |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Maintainer workflow, CI, community registry publish |
-| [LICENSE](LICENSE) | MPL-2.0 (repo and pack) |
-| [`.github/`](.github/) | Validate and sync workflows |
+| `packs/nomatron/` (templates, variables, metadata, outputs, README, CHANGELOG, examples, `.ci/`) | Yes — matches other registry packs |
+| `docs/` | No — extended AWS/Azure/GCP/Proxmox/OpenStack/VMware guides live here |
+| Repo root (CONTRIBUTING, workflows) | No |
 
-**Start here:** [packs/nomatron/README.md](packs/nomatron/README.md)
+**Pack README:** [packs/nomatron/README.md](packs/nomatron/README.md) — install, profiles, variables, deploy workflow. Links to platform docs in this repo.
+
+**Platform guides:** [docs/README.md](docs/README.md) — VM, firewall, Docker, CNI, load balancing, dedicated nodes.
 
 ```bash
 git clone https://github.com/nomatronio/nomatron-pack.git
@@ -19,9 +29,10 @@ cd nomatron-pack/packs/nomatron
 nomad-pack info .
 ```
 
-Or add this repo as a custom registry (same layout as the community registry):
+Or from the default registry (after publish):
 
 ```bash
-nomad-pack registry add nomatronio github.com/nomatronio/nomatron-pack --target=nomatron
-nomad-pack info nomatron --registry=nomatronio
+nomad-pack run nomatron --var-file=production.vars.hcl
 ```
+
+Maintainers: [CONTRIBUTING.md](CONTRIBUTING.md)

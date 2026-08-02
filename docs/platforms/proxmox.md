@@ -128,7 +128,7 @@ Restart: `sudo systemctl restart nomad`
 
 ### Host volume (provision / lab only)
 
-If running pack-managed Postgres on a client, register host volume — see [../../examples/nomad-client-host-volume.hcl.example](../../examples/nomad-client-host-volume.hcl.example).
+If running pack-managed Postgres on a client, register host volume — see [../../examples/nomad-client-host-volume.hcl.example](../../packs/nomatron/examples/nomad-client-host-volume.hcl.example).
 
 ## 6. PostgreSQL (BYODB)
 
@@ -175,7 +175,7 @@ cp examples/provision.vars.hcl.example homelab.vars.hcl   # quickstart / lab
 nomad-pack run -var-file=homelab.vars.hcl .
 ```
 
-Set `node_pool` and `constraints` to match client config — merge [dedicated-nodes.vars.hcl.example](../../examples/dedicated-nodes.vars.hcl.example).
+Set `node_pool` and `constraints` to match client config — merge [dedicated-nodes.vars.hcl.example](../../packs/nomatron/examples/dedicated-nodes.vars.hcl.example).
 
 ## 10. Verify
 

@@ -96,7 +96,7 @@ client {
 }
 ```
 
-Merge [dedicated-nodes.vars.hcl.example](../../examples/dedicated-nodes.vars.hcl.example) into pack vars. Nomad Enterprise: see [dedicated-nodes-and-placement.md](../common/dedicated-nodes-and-placement.md) for node pool and Sentinel recommendations.
+Merge [dedicated-nodes.vars.hcl.example](../../packs/nomatron/examples/dedicated-nodes.vars.hcl.example) into pack vars. Nomad Enterprise: see [dedicated-nodes-and-placement.md](../common/dedicated-nodes-and-placement.md) for node pool and Sentinel recommendations.
 
 Restart Nomad after config changes.
 

@@ -243,4 +243,4 @@ Enable [audit logging](https://developer.hashicorp.com/nomad/docs/govern/audit) 
 
 - [Nomad client setup](nomad-client-setup.md) — Docker, CNI, base client config
 - [Load balancing](load-balancing.md) — ALB vs Traefik vs direct access
-- [Platform guides](../README.md) — per-cloud VM and firewall steps
+- [Platform guides](../packs/nomatron/README.md) — per-cloud VM and firewall steps

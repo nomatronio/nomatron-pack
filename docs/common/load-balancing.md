@@ -216,4 +216,4 @@ Configure this path on ALB target groups, Traefik, and Nomad service checks (aut
 
 - [Ports and firewall](ports-and-firewall.md) — which ports to open for each mode
 - [Dedicated nodes](dedicated-nodes-and-placement.md) — node pools and constraints
-- [Platform guides](../README.md) — cloud-specific LB setup steps
+- [Platform guides](../packs/nomatron/README.md) — cloud-specific LB setup steps

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sync packs/nomatron/ into a community-registry checkout at packs/nomatron/.
+# Sync only community-registry pack files into a registry checkout at packs/nomatron/.
 set -euo pipefail
 
 SOURCE_DIR="${1:-packs/nomatron}"
@@ -10,12 +10,28 @@ if [[ ! -d "$SOURCE_DIR" ]]; then
   exit 1
 fi
 
-mkdir -p "$(dirname "$DEST_DIR")"
+# Match hashicorp/nomad-pack-community-registry pack layout (see hello_world, traefik).
+PACK_ITEMS=(
+  templates
+  examples
+  .ci
+  CHANGELOG.md
+  README.md
+  metadata.hcl
+  outputs.tpl
+  variables.hcl
+)
 
-rsync -a --delete \
-  --exclude='homelab.vars.hcl' \
-  --exclude='mac-dev.vars.hcl' \
-  --exclude='*.vars.hcl' \
-  "$SOURCE_DIR/" "$DEST_DIR/"
+staging="$(mktemp -d)"
+trap 'rm -rf "$staging"' EXIT
 
-echo "Synced $SOURCE_DIR -> $DEST_DIR"
+for item in "${PACK_ITEMS[@]}"; do
+  if [[ -e "$SOURCE_DIR/$item" ]]; then
+    rsync -a "$SOURCE_DIR/$item" "$staging/"
+  fi
+done
+
+mkdir -p "$DEST_DIR"
+rsync -a --delete "$staging/" "$DEST_DIR/"
+
+echo "Synced registry pack files from $SOURCE_DIR -> $DEST_DIR"

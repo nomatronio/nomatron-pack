@@ -1,7 +1,7 @@
 # Dedicated Nomad clients — snippet for pack vars.
 #
 # Merge into production.vars.hcl / ha.vars.hcl after copying from examples/.
-# Client agent config must match — see docs/common/dedicated-nodes-and-placement.md
+# Client agent config must match — see https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/dedicated-nodes-and-placement.md
 
 node_pool = "nomatron"
 

@@ -44,7 +44,7 @@ You need permission to register jobs in the target namespace (default `default`)
 
 ### 3. Get this pack
 
-**The Nomatron pack is not yet in the HashiCorp community registry** (a PR is planned). When you first run `nomad-pack list`, the CLI downloads the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry) (nginx, hello-world, traefik, etc.) — Nomatron will appear there after publish. Until then, use clone or custom registry below. Maintainers: [CONTRIBUTING.md](../../CONTRIBUTING.md#publishing-to-the-nomad-pack-community-registry).
+**The Nomatron pack is not yet in the HashiCorp community registry** (a PR is planned). When you first run `nomad-pack list`, the CLI downloads the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry) (nginx, hello-world, traefik, etc.) — Nomatron will appear there after publish. Until then, use clone or custom registry below.
 
 Use one of these methods:
 
@@ -171,7 +171,7 @@ nomad-pack plan --var-file=ha.vars.hcl .
 nomad-pack run  --var-file=ha.vars.hcl .
 ```
 
-Prepare Nomad clients first: [docs/README.md](docs/README.md).
+Prepare Nomad clients first: [https://github.com/nomatronio/nomatron-pack/tree/main/docs/README.md](https://github.com/nomatronio/nomatron-pack/tree/main/docs/README.md).
 
 ## Reference architecture
 
@@ -220,9 +220,9 @@ Set `deployment_profile` in your vars file. The pack **validates** profile const
 ## Prerequisites
 
 - **Nomad 1.6+** cluster with **Linux clients** for production and for `network_mode=bridge` — see [Nomad version requirements](#nomad-version-requirements)
-- **Platform setup:** step-by-step VM, VPC/VNet, firewall, Docker, and CNI guides for [AWS, Azure, GCP, Proxmox, OpenStack, and VMware](docs/README.md)
-- **Dedicated Nomad clients:** [node_pool, client meta, and pack constraints](docs/common/dedicated-nodes-and-placement.md) — required for production on shared clusters
-- **Load balancing:** [ALB vs Traefik vs direct access](docs/common/load-balancing.md)
+- **Platform setup:** step-by-step VM, VPC/VNet, firewall, Docker, and CNI guides for [AWS, Azure, GCP, Proxmox, OpenStack, and VMware](https://github.com/nomatronio/nomatron-pack/tree/main/docs/README.md)
+- **Dedicated Nomad clients:** [node_pool, client meta, and pack constraints](https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/dedicated-nodes-and-placement.md) — required for production on shared clusters
+- **Load balancing:** [ALB vs Traefik vs direct access](https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/load-balancing.md)
 - For `runtime=docker`: Docker driver enabled on clients
 - For `runtime=binary`: **exec** driver enabled on clients; Docker **not** required for Nomatron (still required for `database_mode=provision` Postgres and `load_balancer_mode=traefik`)
 - **CNI bridge plugin** (required when `network_mode=bridge`) — the default for `database_mode=provision` and for Linux production deployments. Nomad uses [bridge CNI plugins](https://developer.hashicorp.com/nomad/docs/networking/cni) (version **≥ 0.4.0**) on **Linux** clients. CNI plugins are **not available on macOS**; see [macOS dev mode](#macos-dev-mode-nomad-agent--dev) below.
@@ -259,7 +259,7 @@ For **Consul-backed clusters** (common on older Nomad), set `service_provider = 
 
 ### CNI setup (Linux clients)
 
-For full client preparation (Docker, CNI, Nomad config, firewall), see [docs/common/nomad-client-setup.md](docs/common/nomad-client-setup.md) and your [platform guide](docs/README.md).
+For full client preparation (Docker, CNI, Nomad config, firewall), see [https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/nomad-client-setup.md](https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/nomad-client-setup.md) and your [platform guide](https://github.com/nomatronio/nomatron-pack/tree/main/docs/README.md).
 
 Install the CNI plugins on each **Linux** Nomad client and point Nomad at the plugin directory.
 
@@ -539,7 +539,7 @@ For HA with binary runtime, use `examples/ha.byodb.vars.hcl.example` and add the
 
 ## Load balancer
 
-See **[docs/common/load-balancing.md](docs/common/load-balancing.md)** for the full decision guide. Summary:
+See **[https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/load-balancing.md](https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/load-balancing.md)** for the full decision guide. Summary:
 
 | Mode | When to use | Traefik/Fabio? |
 |---|---|---|
@@ -607,7 +607,7 @@ For **Mac dev with `count=1`**, the pack does not emit `serf.encrypt_key` — yo
 
 ### Placement (dedicated clients)
 
-- `node_pool` — must match `client { node_pool = "..." }` on dedicated VMs ([guide](docs/common/dedicated-nodes-and-placement.md))
+- `node_pool` — must match `client { node_pool = "..." }` on dedicated VMs ([guide](https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/dedicated-nodes-and-placement.md))
 - `constraints` — job rules matching client `meta` (e.g. `${meta.nomatron} = true`)
 - `datacenters` — optional datacenter pin
 
@@ -655,7 +655,7 @@ Change `nomatron_version` and redeploy. Nomad performs a rolling update when `co
 
 ## Nomad client sizing (cloud)
 
-**Platform setup (VPC, firewall, Docker, CNI):** [docs/README.md](docs/README.md) — step-by-step guides for AWS, Azure, GCP, Proxmox, OpenStack, and VMware.
+**Platform setup (VPC, firewall, Docker, CNI):** [https://github.com/nomatronio/nomatron-pack/tree/main/docs/README.md](https://github.com/nomatronio/nomatron-pack/tree/main/docs/README.md) — step-by-step guides for AWS, Azure, GCP, Proxmox, OpenStack, and VMware.
 
 Include **starting-point VM sizes** for dedicated Nomad clients — not a full cloud catalog. Sizes derive from pack defaults (`nomatron_resources`: 1000 MHz CPU, 2048 MiB memory per Nomatron server) plus headroom for the Nomad agent, Docker, and CNI.
 
@@ -687,17 +687,15 @@ For full cloud stacks (VPC, load balancer, RDS, secrets), use provider reference
 
 ## License
 
-This pack is licensed under the [Mozilla Public License 2.0](../../LICENSE) (MPL-2.0), the same license as the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry). This repository uses the same `packs/nomatron/` layout as the community registry, so the pack directory syncs upstream without restructuring.
-
-You may use, modify, and distribute the pack under MPL-2.0. If you modify files covered by the license and distribute them, you must make those changes available under MPL-2.0. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the community-registry publish workflow.
+This pack is licensed under the [Mozilla Public License 2.0](https://github.com/nomatronio/nomatron-pack/blob/main/LICENSE) (MPL-2.0), the same license as the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry).
 
 **Nomatron the product** (server binaries, UI, commercial license) is separate from **this Nomad pack** — deploying Nomatron still requires a valid [Nomatron license key](https://nomatron.io) in your vars file (`secrets.license_key`).
 
 ## References
 
-- [Contributing & community registry publish](../../CONTRIBUTING.md) — develop here, sync to HashiCorp community registry
+- [Platform setup guides](https://github.com/nomatronio/nomatron-pack/tree/main/docs) — AWS, Azure, GCP, Proxmox, OpenStack, VMware (maintained in the nomatron-pack repository)
 - [Nomad Pack documentation](https://developer.hashicorp.com/nomad/tools/nomad-pack) — install, commands, registries
-- [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry) — default registry (nginx, traefik, etc.; Nomatron is **not** included)
-- [nomatronio/nomatron-pack](https://github.com/nomatronio/nomatron-pack) — this pack (clone or add as custom registry)
+- [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry) — default registry (nginx, traefik, etc.; Nomatron pending publish)
+- [nomatronio/nomatron-pack](https://github.com/nomatronio/nomatron-pack) — source repository (clone or add as custom registry)
 - [Nomatron AWS reference architecture](https://github.com/nomatronio/reference-architecture/tree/main/aws) — EC2 sizing, RDS, ALB (parallel path to this Nomad pack)
 - [Nomatron container images](https://github.com/nomatronio/nomatron-releases)
