@@ -37,7 +37,7 @@ nomad-pack plan  --var-file=../../examples/production.byodb.vars.hcl.example .
 4. Bump `pack.version` in [`packs/nomatron/metadata.hcl`](packs/nomatron/metadata.hcl) and update [`packs/nomatron/CHANGELOG.md`](packs/nomatron/CHANGELOG.md).
 5. Open a PR.
 
-When editing [`packs/nomatron/README.md`](packs/nomatron/README.md), link to `docs/` and `examples/` with absolute GitHub URLs so links work from the community registry cache.
+When editing [`packs/nomatron/README.md`](packs/nomatron/README.md), keep Nomatron-specific content only; put nomad-pack install/usage in the [root README](README.md). Link to `docs/` with absolute GitHub URLs so links work from the community registry cache.
 
 ## Publishing to the community registry
 

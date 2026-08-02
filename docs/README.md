@@ -2,14 +2,14 @@
 
 Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron Nomad pack](../packs/nomatron/README.md). These guides cover VM creation, networking, firewall rules, Nomad client placement (node pools, metadata, constraints), load balancing choices, and client software (Docker, CNI, Nomad).
 
-**Deploying the pack:** see [Install and use nomad-pack](../packs/nomatron/README.md#install-and-use-nomad-pack) in the pack README (CLI install, clone vs registry, `plan` / `run`).
+**Deploying the pack:** see [Install and use nomad-pack](../README.md#install-and-use-nomad-pack) in the repository README (CLI install, clone vs registry, `plan` / `run`).
 
 ## Before you start
 
 1. Choose a [deployment profile](../packs/nomatron/README.md#deployment-profiles): `production`, `ha`, or `quickstart`.
 2. Read the **shared guides** below — especially if you are new to Nomad placement or load balancing.
 3. Follow your **platform guide**.
-4. Deploy the pack with the matching [example vars](../examples/) plus [dedicated-nodes.vars.hcl.example](../examples/dedicated-nodes.vars.hcl.example) for production.
+4. Deploy using a variables block from [packs/nomatron/README.md](../packs/nomatron/README.md) (or copy from [examples/](../examples/)).
 
 ## Shared guides (read these)
 
