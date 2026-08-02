@@ -141,34 +141,34 @@ variable "binary_arch" {
 variable "server" {
   description = "Nomatron server settings."
   type = object({
-    port                          = number
-    api_addr                      = string
-    trusted_origins               = list(string)
-    log_level                     = string
-    log_format                    = string
-    read_header_timeout_seconds   = number
-    read_timeout_seconds          = number
-    write_timeout_seconds         = number
-    idle_timeout_seconds          = number
-    tls_enabled                   = bool
-    tls_cert_file                 = string
-    tls_key_file                  = string
-    tls_ca_file                   = string
+    port                        = number
+    api_addr                    = string
+    trusted_origins             = list(string)
+    log_level                   = string
+    log_format                  = string
+    read_header_timeout_seconds = number
+    read_timeout_seconds        = number
+    write_timeout_seconds       = number
+    idle_timeout_seconds        = number
+    tls_enabled                 = bool
+    tls_cert_file               = string
+    tls_key_file                = string
+    tls_ca_file                 = string
   })
   default = {
-    port                          = 4649
-    api_addr                      = ""
-    trusted_origins               = []
-    log_level                     = "info"
-    log_format                    = "text"
-    read_header_timeout_seconds   = 10
-    read_timeout_seconds          = 30
-    write_timeout_seconds         = 60
-    idle_timeout_seconds          = 120
-    tls_enabled                   = false
-    tls_cert_file                 = ""
-    tls_key_file                  = ""
-    tls_ca_file                   = ""
+    port                        = 4649
+    api_addr                    = ""
+    trusted_origins             = []
+    log_level                   = "info"
+    log_format                  = "text"
+    read_header_timeout_seconds = 10
+    read_timeout_seconds        = 30
+    write_timeout_seconds       = 60
+    idle_timeout_seconds        = 120
+    tls_enabled                 = false
+    tls_cert_file               = ""
+    tls_key_file                = ""
+    tls_ca_file                 = ""
   }
 }
 
@@ -179,30 +179,30 @@ variable "server" {
 variable "database" {
   description = "PostgreSQL connection settings. Provide connection_string or host/port/name/username/password/sslmode."
   type = object({
-    connection_string           = string
-    host                        = string
-    port                        = number
-    name                        = string
-    username                    = string
-    password                    = string
-    sslmode                     = string
-    max_open_conns              = number
-    max_idle_conns              = number
-    conn_max_lifetime_seconds   = number
-    conn_max_idle_time_seconds  = number
+    connection_string          = string
+    host                       = string
+    port                       = number
+    name                       = string
+    username                   = string
+    password                   = string
+    sslmode                    = string
+    max_open_conns             = number
+    max_idle_conns             = number
+    conn_max_lifetime_seconds  = number
+    conn_max_idle_time_seconds = number
   })
   default = {
-    connection_string           = ""
-    host                        = ""
-    port                        = 5432
-    name                        = "nomatron"
-    username                    = "nomatron"
-    password                    = ""
-    sslmode                     = "disable"
-    max_open_conns              = 25
-    max_idle_conns              = 10
-    conn_max_lifetime_seconds   = 300
-    conn_max_idle_time_seconds  = 60
+    connection_string          = ""
+    host                       = ""
+    port                       = 5432
+    name                       = "nomatron"
+    username                   = "nomatron"
+    password                   = ""
+    sslmode                    = "disable"
+    max_open_conns             = 25
+    max_idle_conns             = 10
+    conn_max_lifetime_seconds  = 300
+    conn_max_idle_time_seconds = 60
   }
 }
 
@@ -213,15 +213,15 @@ variable "database" {
 variable "postgres" {
   description = "Provisioned Postgres settings when database_mode=provision. Not for production use. volume_path is the Nomad host volume NAME (registered on the client), not a filesystem path — see README. When count > 1, a single Postgres task is deployed and Nomatron servers connect via Nomad service discovery."
   type = object({
-    image_tag        = string
-    db_name          = string
-    username         = string
-    password         = string
-    volume_path      = string
-    service_name     = string
-    host_port        = number
-    cpu              = number
-    memory           = number
+    image_tag    = string
+    db_name      = string
+    username     = string
+    password     = string
+    volume_path  = string
+    service_name = string
+    host_port    = number
+    cpu          = number
+    memory       = number
   })
   default = {
     image_tag    = "16"
@@ -243,34 +243,34 @@ variable "postgres" {
 variable "serf" {
   description = "Serf cluster settings for HA deployments."
   type = object({
-    node_name              = string
-    bind_addr              = string
-    advertise_addr         = string
-    port                   = number
-    retry_join             = list(string)
-    retry_join_interval    = string
-    retry_join_max         = number
-    encrypt_key            = string
-    tags                   = map(string)
-    gossip_interval_ms     = number
-    gossip_nodes           = number
-    probe_interval_ms      = number
-    probe_timeout_ms       = number
+    node_name           = string
+    bind_addr           = string
+    advertise_addr      = string
+    port                = number
+    retry_join          = list(string)
+    retry_join_interval = string
+    retry_join_max      = number
+    encrypt_key         = string
+    tags                = map(string)
+    gossip_interval_ms  = number
+    gossip_nodes        = number
+    probe_interval_ms   = number
+    probe_timeout_ms    = number
   })
   default = {
-    node_name              = ""
-    bind_addr              = "0.0.0.0"
-    advertise_addr         = ""
-    port                   = 7946
-    retry_join             = []
-    retry_join_interval    = "30s"
-    retry_join_max         = 0
-    encrypt_key            = ""
-    tags                   = {}
-    gossip_interval_ms     = 0
-    gossip_nodes           = 0
-    probe_interval_ms      = 0
-    probe_timeout_ms       = 0
+    node_name           = ""
+    bind_addr           = "0.0.0.0"
+    advertise_addr      = ""
+    port                = 7946
+    retry_join          = []
+    retry_join_interval = "30s"
+    retry_join_max      = 0
+    encrypt_key         = ""
+    tags                = {}
+    gossip_interval_ms  = 0
+    gossip_nodes        = 0
+    probe_interval_ms   = 0
+    probe_timeout_ms    = 0
   }
 }
 
@@ -327,9 +327,9 @@ variable "operations" {
 variable "bootstrap" {
   description = "Database bootstrap settings for first-time initialization."
   type = object({
-    root_username       = string
-    root_password       = string
-    auto_init_database  = bool
+    root_username      = string
+    root_password      = string
+    auto_init_database = bool
   })
   default = {
     root_username      = "root"
