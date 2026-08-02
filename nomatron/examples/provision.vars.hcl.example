@@ -1,0 +1,30 @@
+# Quickstart / demo — colocated provisioned Postgres (single node).
+# See examples/production.byodb.vars.hcl.example for the production reference path.
+#
+#   cp examples/provision.vars.hcl.example provision.vars.hcl
+#   nomad-pack run -var-file=provision.vars.hcl .
+
+deployment_profile = "quickstart"
+database_mode      = "provision"
+network_mode  = "bridge"
+
+# Optional: target dedicated clients — see docs/common/dedicated-nodes-and-placement.md
+# node_pool = "infra"
+# constraints = [{ attribute = "${meta.nomatron}", operator = "=", value = "true" }]
+# Client agent must set matching node_pool and meta { nomatron = "true" }
+
+postgres = {
+  image_tag   = "16"
+  db_name     = "nomatron"
+  username    = "nomatron"
+  password    = "nomatron"
+  volume_path = "nomatron-postgres" # must match host_volume name on the client
+  cpu         = 500
+  memory      = 1024
+}
+
+secrets = {
+  encryption_key = "REPLACE-WITH-openssl-rand-base64-32"
+  license_key    = "REPLACE-WITH-YOUR-LICENSE-KEY"
+  cluster_key    = "nomatron-cluster-key"
+}

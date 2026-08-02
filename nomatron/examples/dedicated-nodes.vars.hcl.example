@@ -1,0 +1,26 @@
+# Dedicated Nomad clients — snippet for pack vars.
+#
+# Merge into production.vars.hcl / ha.vars.hcl after copying from examples/.
+# Client agent config must match — see docs/common/dedicated-nodes-and-placement.md
+
+node_pool = "nomatron"
+
+constraints = [
+  {
+    attribute = "${meta.nomatron}"
+    operator  = "="
+    value     = "true"
+  }
+]
+
+# Optional: restrict to one datacenter
+# datacenters = ["dc1"]
+
+# --- Cloud ALB / App Gateway / GLB (no Traefik) ---
+# load_balancer_mode = "none"
+# register_service   = false
+# http_port_static   = 4649
+
+# --- Existing Traefik/Fabio on Nomad ---
+# load_balancer_mode = "service"
+# register_service   = true

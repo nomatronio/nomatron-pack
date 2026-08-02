@@ -1,0 +1,50 @@
+# Validate nomatron pack on pull requests and main branch pushes.
+
+name: Validate pack
+
+on:
+  pull_request:
+    paths:
+      - "nomatron/**"
+      - ".github/workflows/validate-pack.yml"
+      - ".github/scripts/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "nomatron/**"
+      - ".github/workflows/validate-pack.yml"
+      - ".github/scripts/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-nomad-pack@main
+        with:
+          version: latest
+
+      - uses: hashicorp/setup-nomad@main
+        with:
+          version: latest
+
+      - name: nomad-pack fmt (check)
+        run: nomad-pack fmt -check -write=false -list=false nomatron
+
+      - name: nomad-pack render (CI var fixtures)
+        run: |
+          mkdir -p rendered
+          shopt -s nullglob
+          for var_file in nomatron/.ci/vars-*.hcl; do
+            echo "::group::${var_file}"
+            nomad-pack render --var-file="${var_file}" -o rendered nomatron
+            PACK_DIR="rendered/nomatron"
+            find "${PACK_DIR}" -type f \( -name '*.nomad' -o -name '*.hcl' \) | while read -r job; do
+              nomad fmt -check "${job}"
+              nomad validate "${job}"
+            done
+            rm -rf "${PACK_DIR}"
+            echo "::endgroup::"
+          done

@@ -1,0 +1,24 @@
+# Nomad client snippet — add to client.hcl on every node that may run provisioned Postgres.
+#
+# 1. Create the directory on the host (once):
+#      sudo mkdir -p /opt/nomad/volumes/nomatron-postgres
+#      sudo chown nomad:nomad /opt/nomad/volumes/nomatron-postgres
+#
+# 2. Register the host volume (name must match postgres.volume_path in the pack):
+#
+#    client {
+#      host_volume "nomatron-postgres" {
+#        path      = "/opt/nomad/volumes/nomatron-postgres"
+#        read_only = false
+#      }
+#    }
+#
+# 3. Restart the Nomad client.
+#
+# 4. Verify the volume is visible:
+#      nomad node status -self -verbose
+#      # or: nomad node status -verbose | grep -A5 HostVolumes
+#
+# The pack mounts this volume into the Postgres task at /var/lib/postgresql/data.
+# Data persists across task restarts and job redeploys as long as the allocation
+# stays on a client that has this host volume at the same path.

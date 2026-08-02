@@ -1,0 +1,46 @@
+# Lab only — multi-server Nomatron HA with a single provisioned Postgres (NOT production).
+#
+#   cp examples/ha.provision-lab.vars.hcl.example ha-lab.vars.hcl
+#   # Requires host volume on Postgres client — see nomad-client-host-volume.hcl.example
+#   nomad-pack run -var-file=ha-lab.vars.hcl .
+
+deployment_profile = "quickstart"
+database_mode      = "provision"
+network_mode       = "bridge"
+count              = 3
+load_balancer_mode = "none"
+service_provider   = "consul" # typical for older Nomad + Consul homelab clusters
+
+postgres = {
+  image_tag    = "16"
+  db_name      = "nomatron"
+  username     = "nomatron"
+  password     = "nomatron"
+  volume_path  = "nomatron-postgres"
+  service_name = "nomatron-postgres"
+  host_port    = 5432
+  cpu          = 500
+  memory       = 1024
+}
+
+serf = {
+  node_name           = ""
+  bind_addr           = "0.0.0.0"
+  advertise_addr      = ""
+  port                = 7946
+  retry_join          = ["10.0.1.10:7946", "10.0.1.11:7946", "10.0.1.12:7946"]
+  retry_join_interval = "30s"
+  retry_join_max      = 0
+  encrypt_key         = "REPLACE-WITH-nomatron-keygen"
+  tags                = {}
+  gossip_interval_ms  = 0
+  gossip_nodes        = 0
+  probe_interval_ms   = 0
+  probe_timeout_ms    = 0
+}
+
+secrets = {
+  encryption_key = "REPLACE-WITH-openssl-rand-base64-32-STABLE"
+  license_key    = "REPLACE-WITH-YOUR-LICENSE-KEY"
+  cluster_key    = "nomatron-cluster-key"
+}

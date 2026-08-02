@@ -1,0 +1,44 @@
+# Merge into /etc/nomad.d/client.hcl (paths vary by install).
+# See docs/common/dedicated-nodes-and-placement.md for node_pool, meta, and constraints.
+
+client {
+  enabled = true
+
+  # Required for network_mode=bridge (pack default on Linux).
+  cni_path = "/opt/cni/bin"
+
+  # --- Dedicated Nomatron clients (production / HA) ---
+  #
+  # Enterprise: must match pack var node_pool = "nomatron"
+  node_pool = "nomatron"
+
+  # Labels matched by pack constraints (works OSS + Enterprise).
+  meta {
+    nomatron = "true"
+    role     = "control"   # optional ops label
+    # env    = "production"
+  }
+
+  # Pin advertised IP when auto-detection is wrong (multi-NIC VMs).
+  host_network "default" {
+    interface = "eth0"   # AWS: ens5, GCP: ens4, VMware: ens192, Proxmox: ens18
+  }
+
+  # Lab only — provision-mode Postgres persistence (name must match postgres.volume_path).
+  # host_volume "nomatron-postgres" {
+  #   path      = "/opt/nomad/volumes/nomatron-postgres"
+  #   read_only = false
+  # }
+}
+
+plugin "docker" {
+  config {
+    allow_privileged = false
+    # volumes { enabled = true }
+  }
+}
+
+# Required for runtime=binary (production BYODB without Docker for Nomatron).
+plugin "exec" {
+  config {}
+}

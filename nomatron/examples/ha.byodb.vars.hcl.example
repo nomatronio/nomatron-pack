@@ -1,0 +1,78 @@
+# HA reference architecture — multi-server Nomatron + shared external HA PostgreSQL.
+#
+#   cp examples/ha.byodb.vars.hcl.example ha.vars.hcl
+#   # Edit: database writer endpoint, serf.retry_join, secrets, public_hostname
+#   nomad-pack run -var-file=ha.vars.hcl .
+
+deployment_profile = "ha"
+database_mode      = "byodb"
+network_mode       = "bridge"
+count              = 3
+
+# Cloud LB → each client :4649 (no Traefik) — see docs/common/load-balancing.md
+load_balancer_mode = "none"
+register_service   = false
+http_port_static   = 4649
+
+# Dedicated clients — see examples/dedicated-nodes.vars.hcl.example
+node_pool = "nomatron"
+constraints = [
+  { attribute = "${meta.nomatron}", operator = "=", value = "true" }
+]
+
+service_provider   = "nomad"
+
+public_hostname = "nomatron.example.com"
+public_scheme   = "https"
+
+database = {
+  connection_string          = "postgres://nomatron:REPLACE@db-writer.example.com:5432/nomatron?sslmode=require"
+  host                       = ""
+  port                       = 5432
+  name                       = "nomatron"
+  username                   = "nomatron"
+  password                   = ""
+  sslmode                    = "require"
+  max_open_conns             = 25
+  max_idle_conns             = 10
+  conn_max_lifetime_seconds  = 300
+  conn_max_idle_time_seconds = 60
+}
+
+server = {
+  port                          = 4649
+  api_addr                      = "https://nomatron.example.com"
+  trusted_origins               = ["https://nomatron.example.com"]
+  log_level                     = "info"
+  log_format                    = "json"
+  read_header_timeout_seconds   = 10
+  read_timeout_seconds          = 30
+  write_timeout_seconds         = 60
+  idle_timeout_seconds          = 120
+  tls_enabled                   = false
+  tls_cert_file                 = ""
+  tls_key_file                  = ""
+  tls_ca_file                   = ""
+}
+
+serf = {
+  node_name           = ""
+  bind_addr           = "0.0.0.0"
+  advertise_addr      = ""
+  port                = 7946
+  retry_join          = ["10.0.1.10:7946", "10.0.1.11:7946", "10.0.1.12:7946"]
+  retry_join_interval = "30s"
+  retry_join_max      = 0
+  encrypt_key         = "REPLACE-WITH-nomatron-keygen"
+  tags                = {}
+  gossip_interval_ms  = 0
+  gossip_nodes        = 0
+  probe_interval_ms   = 0
+  probe_timeout_ms    = 0
+}
+
+secrets = {
+  encryption_key = "REPLACE-WITH-openssl-rand-base64-32-STABLE"
+  license_key    = "REPLACE-WITH-YOUR-LICENSE-KEY"
+  cluster_key    = "nomatron-cluster-key"
+}

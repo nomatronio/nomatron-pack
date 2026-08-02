@@ -1,0 +1,66 @@
+# Production reference architecture — single Nomatron server + external HA PostgreSQL.
+#
+#   cp examples/production.byodb.vars.hcl.example production.vars.hcl
+#   # Edit: database connection (writer endpoint), secrets, public_hostname, api_addr
+#   nomad-pack run -var-file=production.vars.hcl .
+
+deployment_profile   = "production"
+database_mode        = "byodb"
+network_mode         = "bridge"
+
+# Cloud LB (ALB, App Gateway, GLB): no Traefik — see docs/common/load-balancing.md
+load_balancer_mode   = "none"
+register_service     = false
+http_port_static     = 4649
+
+# If using Traefik/Fabio on Nomad instead, use:
+# load_balancer_mode = "service"
+# register_service   = true
+
+# Dedicated clients — merge from examples/dedicated-nodes.vars.hcl.example
+node_pool = "nomatron"
+constraints = [
+  { attribute = "${meta.nomatron}", operator = "=", value = "true" }
+]
+
+service_provider     = "nomad" # use "consul" on older Nomad + Consul clusters
+
+public_hostname = "nomatron.example.com"
+public_scheme   = "https"
+
+database = {
+  # Writer endpoint from RDS, Cloud SQL, Patroni leader service, PgBouncer, etc.
+  connection_string          = "postgres://nomatron:REPLACE@db-writer.example.com:5432/nomatron?sslmode=require"
+  host                       = ""
+  port                       = 5432
+  name                       = "nomatron"
+  username                   = "nomatron"
+  password                   = ""
+  sslmode                    = "require"
+  max_open_conns             = 25
+  max_idle_conns             = 10
+  conn_max_lifetime_seconds  = 300
+  conn_max_idle_time_seconds = 60
+}
+
+server = {
+  port                          = 4649
+  api_addr                      = "https://nomatron.example.com"
+  trusted_origins               = ["https://nomatron.example.com"]
+  log_level                     = "info"
+  log_format                    = "json"
+  read_header_timeout_seconds   = 10
+  read_timeout_seconds          = 30
+  write_timeout_seconds         = 60
+  idle_timeout_seconds          = 120
+  tls_enabled                   = false # terminate TLS at load balancer, or enable here
+  tls_cert_file                 = ""
+  tls_key_file                  = ""
+  tls_ca_file                   = ""
+}
+
+secrets = {
+  encryption_key = "REPLACE-WITH-openssl-rand-base64-32-STABLE"
+  license_key    = "REPLACE-WITH-YOUR-LICENSE-KEY"
+  cluster_key    = "nomatron-cluster-key"
+}

@@ -1,0 +1,82 @@
+# Production reference architecture — Nomatron binary (exec driver) + BYODB.
+#
+# Use when Nomad clients should NOT run Docker for Nomatron (policy, apt/package
+# management, air-gapped hosts). Matches the spirit of the AWS reference architecture
+# (Nomatron installed from packages.nomatron.io/apt), but scheduled by Nomad exec.
+#
+#   cp examples/production.byodb.binary.vars.hcl.example production.vars.hcl
+#   # Edit: database writer URL, secrets, public_hostname, binary_path
+#   nomad-pack plan --var-file=production.vars.hcl .
+#   nomad-pack run  --var-file=production.vars.hcl .
+#
+# Client prep:
+#   - Install Nomatron on each dedicated client (apt or tarball) at binary_path
+#   - Enable Nomad exec driver; Docker is NOT required for this profile
+#   - CNI plugins still required for network_mode=bridge
+#   - See docs/common/dedicated-nodes-and-placement.md
+
+deployment_profile = "production"
+database_mode      = "byodb"
+network_mode       = "bridge"
+runtime            = "binary"
+
+# Pre-installed binary on the client (recommended for production — same as apt install path)
+binary_install_method = "host"
+binary_path           = "/usr/bin/nomatron" # dpkg -L nomatron | rg bin/nomatron
+
+# Pin the version you installed on clients (audit/docs; host method does not download artifacts)
+nomatron_version = "v0.1.0-rc.21"
+
+# Alternative: let Nomad download the release tarball into each allocation (needs egress to GitHub)
+# binary_install_method = "artifact"
+# binary_arch           = "amd64"   # or arm64
+
+load_balancer_mode = "none"
+register_service   = false
+http_port_static   = 4649
+
+node_pool = "nomatron"
+constraints = [
+  { attribute = "${meta.nomatron}", operator = "=", value = "true" }
+]
+
+service_provider = "nomad"
+
+public_hostname = "nomatron.example.com"
+public_scheme   = "https"
+
+database = {
+  connection_string          = "postgres://nomatron:REPLACE@db-writer.example.com:5432/nomatron?sslmode=require"
+  host                       = ""
+  port                       = 5432
+  name                       = "nomatron"
+  username                   = "nomatron"
+  password                   = ""
+  sslmode                    = "require"
+  max_open_conns             = 25
+  max_idle_conns             = 10
+  conn_max_lifetime_seconds  = 300
+  conn_max_idle_time_seconds = 60
+}
+
+server = {
+  port                          = 4649
+  api_addr                      = "https://nomatron.example.com"
+  trusted_origins               = ["https://nomatron.example.com"]
+  log_level                     = "info"
+  log_format                    = "json"
+  read_header_timeout_seconds   = 10
+  read_timeout_seconds          = 30
+  write_timeout_seconds         = 60
+  idle_timeout_seconds          = 120
+  tls_enabled                   = false
+  tls_cert_file                 = ""
+  tls_key_file                  = ""
+  tls_ca_file                   = ""
+}
+
+secrets = {
+  encryption_key = "REPLACE-WITH-openssl-rand-base64-32-STABLE"
+  license_key    = "REPLACE-WITH-YOUR-LICENSE-KEY"
+  cluster_key    = "nomatron-cluster-key"
+}

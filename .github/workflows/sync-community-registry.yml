@@ -1,0 +1,134 @@
+# Open a PR against hashicorp/nomad-pack-community-registry when a release tag is pushed.
+#
+# Setup (once):
+#   1. Fork https://github.com/hashicorp/nomad-pack-community-registry to nomatronio/
+#   2. Add repo secret COMMUNITY_REGISTRY_SYNC_TOKEN — PAT with repo scope, write access
+#      to the fork, and permission to open PRs against the upstream repository.
+#
+# See CONTRIBUTING.md § "Automated sync to the community registry".
+
+name: Sync community registry
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to sync (e.g. v0.2.0). Defaults to refs/tags on manual runs from a tag."
+        required: false
+        type: string
+
+concurrency:
+  group: sync-community-registry-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  COMMUNITY_REGISTRY_UPSTREAM: hashicorp/nomad-pack-community-registry
+  COMMUNITY_REGISTRY_FORK: nomatronio/nomad-pack-community-registry
+  PACK_PATH: packs/nomatron
+
+jobs:
+  validate:
+    name: Validate pack
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.name }}
+      branch: ${{ steps.tag.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            TAG="${{ inputs.tag }}"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            echo "No tag resolved. Push a v* tag or provide workflow_dispatch input." >&2
+            exit 1
+          fi
+          if [[ ! "${TAG}" =~ ^v ]]; then
+            echo "Tag must start with v (got ${TAG})" >&2
+            exit 1
+          fi
+          echo "name=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "branch=nomatron/sync-${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag: ${TAG}"
+
+      - name: Verify metadata version matches tag
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          TAG="${TAG#v}"
+          PACK_VERSION="$(sed -n 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' nomatron/metadata.hcl | head -1)"
+          PACK_VERSION="${PACK_VERSION#v}"
+          if [[ "${TAG}" != "${PACK_VERSION}" ]]; then
+            echo "Tag v${TAG} does not match nomatron/metadata.hcl pack.version (${PACK_VERSION})" >&2
+            exit 1
+          fi
+          echo "Tag and metadata.hcl version align (v${TAG})."
+
+      - uses: hashicorp/setup-nomad-pack@main
+        with:
+          version: latest
+
+      - name: nomad-pack render (CI var fixtures)
+        run: |
+          shopt -s nullglob
+          for var_file in nomatron/.ci/vars-*.hcl; do
+            echo "::group::render ${var_file}"
+            nomad-pack render --var-file="${var_file}" nomatron > /dev/null
+            echo "::endgroup::"
+          done
+
+  sync-pr:
+    name: Open upstream PR
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ needs.validate.outputs.tag }}
+
+      - name: Checkout community registry fork
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.COMMUNITY_REGISTRY_FORK }}
+          token: ${{ secrets.COMMUNITY_REGISTRY_SYNC_TOKEN }}
+          path: community-registry
+          fetch-depth: 0
+
+      - name: Sync pack into fork
+        run: |
+          chmod +x .github/scripts/sync-community-registry.sh
+          ./.github/scripts/sync-community-registry.sh nomatron "community-registry/${PACK_PATH}"
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.COMMUNITY_REGISTRY_SYNC_TOKEN }}
+          path: community-registry
+          push-to-fork: ${{ env.COMMUNITY_REGISTRY_FORK }}
+          repository: ${{ env.COMMUNITY_REGISTRY_UPSTREAM }}
+          commit-message: "nomatron: sync pack ${{ needs.validate.outputs.tag }}"
+          branch: ${{ needs.validate.outputs.branch }}
+          delete-branch: true
+          title: "nomatron: sync pack ${{ needs.validate.outputs.tag }}"
+          body: |
+            Automated sync from [nomatronio/nomatron-pack@${{ needs.validate.outputs.tag }}](https://github.com/nomatronio/nomatron-pack/releases/tag/${{ needs.validate.outputs.tag }}).
+
+            ## Maintainer checklist
+
+            - [ ] Community registry CI (`validate-packs`) passes
+            - [ ] `packs/nomatron/metadata.hcl` version matches the nomatron-pack release
+            - [ ] Review diff under `packs/nomatron/`
+
+            ## Source
+
+            - Repository: https://github.com/nomatronio/nomatron-pack
+            - Tag: `${{ needs.validate.outputs.tag }}`
+          labels: |
+            pack
+          base: main

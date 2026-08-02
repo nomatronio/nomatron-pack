@@ -1,0 +1,37 @@
+# Copy to mac-dev.vars.hcl and fill in secrets. Do not commit mac-dev.vars.hcl.
+#
+#   cp examples/mac-dev.vars.hcl.example mac-dev.vars.hcl
+#
+# Generate stable secrets once:
+#   openssl rand -base64 32    # encryption_key
+#
+# Deploy:
+#   nomad-pack run -var-file=mac-dev.vars.hcl .
+
+database_mode = "byodb"
+network_mode  = "standard"
+
+nomatron_resources = {
+  cpu    = 25
+  memory = 512
+}
+
+database = {
+  connection_string          = "postgres://nomatron:nomatron@host.docker.internal:5432/nomatron?sslmode=disable"
+  host                       = ""
+  port                       = 5432
+  name                       = "nomatron"
+  username                   = "nomatron"
+  password                   = ""
+  sslmode                    = "disable"
+  max_open_conns             = 50
+  max_idle_conns             = 25
+  conn_max_lifetime_seconds  = 300
+  conn_max_idle_time_seconds = 60
+}
+
+secrets = {
+  encryption_key = "REPLACE-WITH-openssl-rand-base64-32"
+  license_key    = "REPLACE-WITH-YOUR-LICENSE-KEY"
+  cluster_key    = "REPLACE-WITH-YOUR-CLUSTER-KEY"
+}

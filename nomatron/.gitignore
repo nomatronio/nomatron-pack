@@ -1,0 +1,3 @@
+# Local variable files with secrets — copy from examples/*.example instead
+*.vars.hcl
+!examples/*.example
