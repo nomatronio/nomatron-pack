@@ -44,7 +44,7 @@ You need permission to register jobs in the target namespace (default `default`)
 
 ### 3. Get this pack
 
-**The Nomatron pack is not yet in the HashiCorp community registry** (a PR is planned). When you first run `nomad-pack list`, the CLI downloads the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry) (nginx, hello-world, traefik, etc.) — Nomatron will appear there after publish. Until then, use clone or custom registry below. Maintainers: [CONTRIBUTING.md](../CONTRIBUTING.md#publishing-to-the-nomad-pack-community-registry).
+**The Nomatron pack is not yet in the HashiCorp community registry** (a PR is planned). When you first run `nomad-pack list`, the CLI downloads the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry) (nginx, hello-world, traefik, etc.) — Nomatron will appear there after publish. Until then, use clone or custom registry below. Maintainers: [CONTRIBUTING.md](../../CONTRIBUTING.md#publishing-to-the-nomad-pack-community-registry).
 
 Use one of these methods:
 
@@ -52,12 +52,12 @@ Use one of these methods:
 
 ```bash
 git clone https://github.com/nomatronio/nomatron-pack.git
-cd nomatron-pack/nomatron
+cd nomatron-pack/packs/nomatron
 
 nomad-pack info .          # show pack name, version, all variables
 ```
 
-All commands below use `.` to mean “this pack directory”. You can also pass a relative path (for example `../nomatron`).
+All commands below use `.` to mean “this pack directory”. From the repo root you can also pass `packs/nomatron`.
 
 #### Option B — Add as a custom registry
 
@@ -121,7 +121,7 @@ nomad-pack info .
 Always **plan** before **run** to catch placement and validation errors:
 
 ```bash
-# From the nomatron/ pack directory
+# From the packs/nomatron/ directory
 nomad-pack plan --var-file=production.vars.hcl .
 nomad-pack run  --var-file=production.vars.hcl .
 ```
@@ -687,15 +687,15 @@ For full cloud stacks (VPC, load balancer, RDS, secrets), use provider reference
 
 ## License
 
-This pack is licensed under the [Mozilla Public License 2.0](../LICENSE) (MPL-2.0), the same license as the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry). That keeps this repository compatible when syncing to `packs/nomatron/` upstream.
+This pack is licensed under the [Mozilla Public License 2.0](../../LICENSE) (MPL-2.0), the same license as the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry). This repository uses the same `packs/nomatron/` layout as the community registry, so the pack directory syncs upstream without restructuring.
 
-You may use, modify, and distribute the pack under MPL-2.0. If you modify files covered by the license and distribute them, you must make those changes available under MPL-2.0. See [CONTRIBUTING.md](../CONTRIBUTING.md) for the community-registry publish workflow.
+You may use, modify, and distribute the pack under MPL-2.0. If you modify files covered by the license and distribute them, you must make those changes available under MPL-2.0. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the community-registry publish workflow.
 
 **Nomatron the product** (server binaries, UI, commercial license) is separate from **this Nomad pack** — deploying Nomatron still requires a valid [Nomatron license key](https://nomatron.io) in your vars file (`secrets.license_key`).
 
 ## References
 
-- [Contributing & community registry publish](../CONTRIBUTING.md) — develop here, sync to HashiCorp community registry
+- [Contributing & community registry publish](../../CONTRIBUTING.md) — develop here, sync to HashiCorp community registry
 - [Nomad Pack documentation](https://developer.hashicorp.com/nomad/tools/nomad-pack) — install, commands, registries
 - [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry) — default registry (nginx, traefik, etc.; Nomatron is **not** included)
 - [nomatronio/nomatron-pack](https://github.com/nomatronio/nomatron-pack) — this pack (clone or add as custom registry)

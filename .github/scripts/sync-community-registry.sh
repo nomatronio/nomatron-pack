@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Sync nomatron/ into a community-registry checkout at packs/nomatron/.
+# Sync packs/nomatron/ into a community-registry checkout at packs/nomatron/.
 set -euo pipefail
 
-SOURCE_DIR="${1:-nomatron}"
+SOURCE_DIR="${1:-packs/nomatron}"
 DEST_DIR="${2:?destination directory required (e.g. community-registry/packs/nomatron)}"
 
 if [[ ! -d "$SOURCE_DIR" ]]; then

@@ -196,7 +196,7 @@ Expected: available CPU ≥ `nomatron_resources.cpu` and memory ≥ `nomatron_re
 ## 8. Deploy the pack
 
 ```bash
-cd nomatron-pack/nomatron
+cd nomatron-pack/packs/nomatron
 cp examples/production.byodb.vars.hcl.example production.vars.hcl
 # Merge examples/dedicated-nodes.vars.hcl.example for node_pool + constraints
 # Edit database writer URL, secrets, public_hostname, load_balancer_mode

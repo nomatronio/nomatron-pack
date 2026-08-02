@@ -5,14 +5,14 @@ name: Validate pack
 on:
   pull_request:
     paths:
-      - "nomatron/**"
+      - "packs/nomatron/**"
       - ".github/workflows/validate-pack.yml"
       - ".github/scripts/**"
   push:
     branches:
       - main
     paths:
-      - "nomatron/**"
+      - "packs/nomatron/**"
       - ".github/workflows/validate-pack.yml"
       - ".github/scripts/**"
 
@@ -31,15 +31,15 @@ jobs:
           version: latest
 
       - name: nomad-pack fmt (check)
-        run: nomad-pack fmt -check -write=false -list=false nomatron
+        run: nomad-pack fmt -check -write=false -list=false packs/nomatron
 
       - name: nomad-pack render (CI var fixtures)
         run: |
           mkdir -p rendered
           shopt -s nullglob
-          for var_file in nomatron/.ci/vars-*.hcl; do
+          for var_file in packs/nomatron/.ci/vars-*.hcl; do
             echo "::group::${var_file}"
-            nomad-pack render --var-file="${var_file}" -o rendered nomatron
+            nomad-pack render --var-file="${var_file}" -o rendered packs/nomatron
             PACK_DIR="rendered/nomatron"
             find "${PACK_DIR}" -type f \( -name '*.nomad' -o -name '*.hcl' \) | while read -r job; do
               nomad fmt -check "${job}"
