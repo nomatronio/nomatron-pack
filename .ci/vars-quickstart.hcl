@@ -1,5 +1,4 @@
-# CI-only variables for community registry validation (nomad-pack render / nomad validate).
-# Not for deployment — secrets are placeholders.
+# CI fixture — lab quickstart with colocated Postgres (database_mode=provision).
 
 deployment_profile = "quickstart"
 database_mode      = "provision"
