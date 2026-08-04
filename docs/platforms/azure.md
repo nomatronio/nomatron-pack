@@ -81,7 +81,7 @@ Match pack vars ([dedicated-nodes.vars.hcl.example](../../examples/dedicated-nod
 
 ```hcl
 node_pool = "nomatron"
-constraints = [{ attribute = "${meta.nomatron}", operator = "=", value = "true" }]
+constraints = [{ attribute = "$${meta.nomatron}", operator = "=", value = "true" }]
 ```
 
 ## 6. PostgreSQL (BYODB)

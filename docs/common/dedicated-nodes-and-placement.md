@@ -87,7 +87,7 @@ node_pool = "nomatron"
 
 constraints = [
   {
-    attribute = "${meta.nomatron}"
+    attribute = "$${meta.nomatron}"
     operator  = "="
     value     = "true"
   }
@@ -108,7 +108,7 @@ node_pool = "infra"
 
 constraints = [
   {
-    attribute = "${meta.nomatron}"
+    attribute = "$${meta.nomatron}"
     operator  = "="
     value     = "true"
   }

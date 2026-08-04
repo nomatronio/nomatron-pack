@@ -20,7 +20,7 @@ http_port_static     = 4649
 # Dedicated clients — merge from examples/dedicated-nodes.vars.hcl.example
 node_pool = "nomatron"
 constraints = [
-  { attribute = "${meta.nomatron}", operator = "=", value = "true" }
+  { attribute = "$${meta.nomatron}", operator = "=", value = "true" }
 ]
 
 service_provider     = "nomad" # use "consul" on older Nomad + Consul clusters

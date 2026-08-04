@@ -162,7 +162,7 @@ Match pack placement to dedicated clients:
 
 ```hcl
 node_pool = "nomatron"
-constraints = [{ attribute = "${meta.nomatron}", operator = "=", value = "true" }]
+constraints = [{ attribute = "$${meta.nomatron}", operator = "=", value = "true" }]
 ```
 
 **When to use Traefik instead:** only if you already operate Traefik on this Nomad cluster (`load_balancer_mode=service`) or want the pack to install it (`load_balancer_mode=traefik`). Do not configure ALB → 4649 on every node *and* Traefik to the same tasks without a deliberate two-tier design.

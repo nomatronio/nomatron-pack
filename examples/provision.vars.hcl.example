@@ -10,7 +10,7 @@ network_mode  = "bridge"
 
 # Optional: target dedicated clients — see https://github.com/nomatronio/nomatron-pack/tree/main/docs/common/dedicated-nodes-and-placement.md
 # node_pool = "infra"
-# constraints = [{ attribute = "${meta.nomatron}", operator = "=", value = "true" }]
+# constraints = [{ attribute = "$${meta.nomatron}", operator = "=", value = "true" }]
 # Client agent must set matching node_pool and meta { nomatron = "true" }
 
 postgres = {

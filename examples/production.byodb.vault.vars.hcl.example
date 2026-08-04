@@ -28,7 +28,7 @@ http_port_static   = 4649
 
 node_pool = "nomatron"
 constraints = [
-  { attribute = "${meta.nomatron}", operator = "=", value = "true" }
+  { attribute = "$${meta.nomatron}", operator = "=", value = "true" }
 ]
 
 public_hostname = "nomatron.example.com"
