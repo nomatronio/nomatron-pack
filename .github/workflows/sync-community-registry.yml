@@ -6,6 +6,9 @@
 #      to the fork, and permission to open PRs against the upstream repository.
 #
 # See CONTRIBUTING.md § "Automated sync to the community registry".
+#
+# Tag version is matched against packs/nomatron/metadata.hcl. Both packs/nomatron and
+# packs/nomatron-agent are synced into the registry PR on each release tag.
 
 name: Sync community registry
 
@@ -27,7 +30,6 @@ concurrency:
 env:
   COMMUNITY_REGISTRY_UPSTREAM: hashicorp/nomad-pack-community-registry
   COMMUNITY_REGISTRY_FORK: nomatronio/nomad-pack-community-registry
-  PACK_PATH: packs/nomatron
 
 jobs:
   validate:
@@ -58,7 +60,7 @@ jobs:
           echo "branch=nomatron/sync-${TAG}" >> "$GITHUB_OUTPUT"
           echo "Resolved tag: ${TAG}"
 
-      - name: Verify metadata version matches tag
+      - name: Verify server pack metadata version matches tag
         run: |
           TAG="${{ steps.tag.outputs.name }}"
           TAG="${TAG#v}"
@@ -68,7 +70,7 @@ jobs:
             echo "Tag v${TAG} does not match packs/nomatron/metadata.hcl pack.version (${PACK_VERSION})" >&2
             exit 1
           fi
-          echo "Tag and metadata.hcl version align (v${TAG})."
+          echo "Tag and packs/nomatron metadata.hcl version align (v${TAG})."
 
       - uses: hashicorp/setup-nomad-pack@main
         with:
@@ -78,8 +80,14 @@ jobs:
         run: |
           shopt -s nullglob
           for var_file in .ci/vars-*.hcl; do
-            echo "::group::render ${var_file}"
+            [[ "${var_file}" == .ci/vars-agent* ]] && continue
+            echo "::group::render ${var_file} -> packs/nomatron"
             nomad-pack render --var-file="${var_file}" packs/nomatron > /dev/null
+            echo "::endgroup::"
+          done
+          for var_file in .ci/vars-agent*.hcl; do
+            echo "::group::render ${var_file} -> packs/nomatron-agent"
+            nomad-pack render --var-file="${var_file}" packs/nomatron-agent > /dev/null
             echo "::endgroup::"
           done
 
@@ -100,10 +108,11 @@ jobs:
           path: community-registry
           fetch-depth: 0
 
-      - name: Sync pack into fork
+      - name: Sync packs into fork
         run: |
           chmod +x .github/scripts/sync-community-registry.sh
-          ./.github/scripts/sync-community-registry.sh packs/nomatron "community-registry/${PACK_PATH}"
+          ./.github/scripts/sync-community-registry.sh packs/nomatron community-registry/packs/nomatron
+          ./.github/scripts/sync-community-registry.sh packs/nomatron-agent community-registry/packs/nomatron-agent
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v7
@@ -112,23 +121,25 @@ jobs:
           path: community-registry
           push-to-fork: ${{ env.COMMUNITY_REGISTRY_FORK }}
           repository: ${{ env.COMMUNITY_REGISTRY_UPSTREAM }}
-          commit-message: "nomatron: sync pack ${{ needs.validate.outputs.tag }}"
+          commit-message: "nomatron: sync packs ${{ needs.validate.outputs.tag }}"
           branch: ${{ needs.validate.outputs.branch }}
           delete-branch: true
-          title: "nomatron: sync pack ${{ needs.validate.outputs.tag }}"
+          title: "nomatron: sync packs ${{ needs.validate.outputs.tag }}"
           body: |
             Automated sync from [nomatronio/nomatron-pack@${{ needs.validate.outputs.tag }}](https://github.com/nomatronio/nomatron-pack/releases/tag/${{ needs.validate.outputs.tag }}).
 
             ## Maintainer checklist
 
             - [ ] Community registry CI (`validate-packs`) passes
-            - [ ] `packs/nomatron/metadata.hcl` version matches the nomatron-pack release
-            - [ ] Review diff under `packs/nomatron/`
+            - [ ] `packs/nomatron/metadata.hcl` version matches the nomatron-pack release tag
+            - [ ] Review diffs under `packs/nomatron/` and `packs/nomatron-agent/`
+            - [ ] Attach Nomad UI screenshots (job overview, allocations, allocation detail) for new or updated packs
 
             ## Source
 
             - Repository: https://github.com/nomatronio/nomatron-pack
             - Tag: `${{ needs.validate.outputs.tag }}`
+            - Packs: `nomatron`, `nomatron-agent`
           labels: |
             pack
           base: main
