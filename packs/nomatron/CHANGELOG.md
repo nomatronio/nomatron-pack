@@ -1,3 +1,9 @@
+## Version v0.2.2 (2026-08-30)
+
+### Fixed
+
+- **`nomad_var` / `vault` database config:** emit a placeholder `connection_string` in `nomatron.hcl` so Nomatron HCL decode succeeds. The real URL still comes from `NOMATRON_DB_URL` at runtime.
+
 ## Version v0.2.1 (2026-08-30)
 
 ### Fixed
