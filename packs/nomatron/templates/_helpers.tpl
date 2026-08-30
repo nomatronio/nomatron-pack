@@ -207,9 +207,9 @@ EOH
 [[- if eq (var "secrets_backend" .) "pack_vars" ]]
   encrypt_key = [[ var "serf.encrypt_key" . | quote ]]
 [[- else if eq (var "secrets_backend" .) "nomad_var" ]]
-  encrypt_key = "{{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kSerf ]]" | toJSON }}{{- end }}"
+  encrypt_key = {{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kSerf ]]" | toJSON }}{{- end }}
 [[- else if eq (var "secrets_backend" .) "vault" ]]
-  encrypt_key = "{{- with secret "[[ $vPath ]]" }}{{ .Data.data.[[ $vSerf ]] | toJSON }}{{- end }}"
+  encrypt_key = {{- with secret "[[ $vPath ]]" }}{{ .Data.data.[[ $vSerf ]] | toJSON }}{{- end }}
 [[- end ]]
 [[- end ]]
 [[- end -]]

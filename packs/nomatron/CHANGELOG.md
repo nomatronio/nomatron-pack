@@ -1,3 +1,9 @@
+## Version v0.2.1 (2026-08-30)
+
+### Fixed
+
+- **Serf `encrypt_key` with Nomad Variables / Vault:** remove extra quotes around `toJSON` in `nomatron.hcl` so HA deployments no longer render `encrypt_key = ""key""` and fail Nomatron config parsing.
+
 ## Version v0.2.0 (2026-08-02)
 
 ### Added
