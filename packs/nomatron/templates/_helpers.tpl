@@ -218,7 +218,8 @@ EOH
 [[- if eq (var "secrets_backend" .) "pack_vars" ]]
   connection_string = [[ if and (eq (var "database_mode" .) "provision") (gt (var "count" .) 1) ]][[ if eq (var "service_provider" .) "consul" ]][[ printf "postgres://%s:%s@{{ with service %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ else ]][[ printf "postgres://%s:%s@{{ with nomadService %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ end ]][[ else if eq (var "database_mode" .) "provision" ]][[ printf "postgres://%s:%s@127.0.0.1:5432/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.db_name" .) | quote ]][[ else if ne (var "database.connection_string" .) "" ]][[ var "database.connection_string" . | quote ]][[ else ]][[ printf "postgres://%s:%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.password" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]][[ end ]]
 [[- else ]]
-  # connection_string supplied at runtime via NOMATRON_DB_URL (Nomad Variable or Vault)
+  # Placeholder satisfies Nomatron HCL decode; NOMATRON_DB_URL from Nomad Variable/Vault overrides at runtime.
+  connection_string = [[ printf "postgres://%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]]
 [[- end ]]
 [[- end -]]
 
