@@ -1,4 +1,4 @@
-# Validate nomatron pack on pull requests and main branch pushes.
+# Validate nomatron packs on pull requests and main branch pushes.
 
 name: Validate pack
 
@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - "packs/nomatron/**"
+      - "packs/nomatron-agent/**"
       - ".ci/**"
       - ".github/workflows/validate-pack.yml"
       - ".github/scripts/**"
@@ -14,6 +15,7 @@ on:
       - main
     paths:
       - "packs/nomatron/**"
+      - "packs/nomatron-agent/**"
       - ".ci/**"
       - ".github/workflows/validate-pack.yml"
       - ".github/scripts/**"
@@ -33,16 +35,35 @@ jobs:
           version: latest
 
       - name: nomad-pack fmt (check)
-        run: nomad-pack fmt -check -write=false -list=false packs/nomatron
+        run: |
+          nomad-pack fmt -check -write=false -list=false packs/nomatron
+          nomad-pack fmt -check -write=false -list=false packs/nomatron-agent
 
-      - name: nomad-pack render (CI var fixtures)
+      - name: nomad-pack render (server CI fixtures)
         run: |
           mkdir -p rendered
           shopt -s nullglob
           for var_file in .ci/vars-*.hcl; do
-            echo "::group::${var_file}"
+            [[ "${var_file}" == .ci/vars-agent* ]] && continue
+            echo "::group::${var_file} -> packs/nomatron"
             nomad-pack render --var-file="${var_file}" -o rendered packs/nomatron
             PACK_DIR="rendered/nomatron"
+            find "${PACK_DIR}" -type f \( -name '*.nomad' -o -name '*.hcl' \) | while read -r job; do
+              nomad fmt -check "${job}"
+              nomad validate "${job}"
+            done
+            rm -rf "${PACK_DIR}"
+            echo "::endgroup::"
+          done
+
+      - name: nomad-pack render (agent CI fixtures)
+        run: |
+          mkdir -p rendered
+          shopt -s nullglob
+          for var_file in .ci/vars-agent*.hcl; do
+            echo "::group::${var_file} -> packs/nomatron-agent"
+            nomad-pack render --var-file="${var_file}" -o rendered packs/nomatron-agent
+            PACK_DIR="rendered/nomatron-agent"
             find "${PACK_DIR}" -type f \( -name '*.nomad' -o -name '*.hcl' \) | while read -r job; do
               nomad fmt -check "${job}"
               nomad validate "${job}"

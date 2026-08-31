@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Sync only community-registry pack files into a registry checkout at packs/nomatron/.
+# Sync only community-registry pack files into a registry checkout.
+# Usage: sync-community-registry.sh <source-pack-dir> <dest-pack-dir>
+# Example: ./sync-community-registry.sh packs/nomatron community-registry/packs/nomatron
+#          ./sync-community-registry.sh packs/nomatron-agent community-registry/packs/nomatron-agent
 set -euo pipefail
 
-SOURCE_DIR="${1:-packs/nomatron}"
+SOURCE_DIR="${1:?source pack directory required (e.g. packs/nomatron)}"
 DEST_DIR="${2:?destination directory required (e.g. community-registry/packs/nomatron)}"
 
 if [[ ! -d "$SOURCE_DIR" ]]; then

@@ -1,8 +1,13 @@
 # nomatron-pack
 
-Official [Nomad Pack](https://developer.hashicorp.com/nomad/tools/nomad-pack) for deploying [Nomatron](https://nomatron.io) on HashiCorp Nomad.
+Official [Nomad Pack](https://developer.hashicorp.com/nomad/tools/nomad-pack) repository for deploying [Nomatron](https://nomatron.io) on HashiCorp Nomad.
 
-**Nomatron pack docs:** [packs/nomatron/README.md](packs/nomatron/README.md) — deployment profiles, variables, example HCL, and Nomatron-specific guidance.
+| Pack | Path | Purpose |
+|---|---|---|
+| **nomatron** | [packs/nomatron/](packs/nomatron/) | Nomatron **server** (control plane) — primary production deploy path |
+| **nomatron-agent** | [packs/nomatron-agent/](packs/nomatron-agent/) | Nomatron **Network Agent** (private Nomad connectivity) |
+
+These packs are siblings: deploy them independently. The agent often runs on a different Nomad cluster than the server.
 
 **Platform setup guides:** [docs/README.md](docs/README.md) — AWS, Azure, GCP, Proxmox, OpenStack, VMware (repo only, not synced to the community registry).
 
@@ -12,10 +17,11 @@ Maintainers: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ```text
 nomatron-pack/
-├── packs/nomatron/     # Synced to community registry (templates, vars, README, …)
-├── docs/               # Platform guides (repo only)
-├── examples/           # Copy of example vars (repo only; HCL also in pack README)
-├── .ci/                # CI fixtures (repo only)
+├── packs/nomatron/         # Server pack (synced to community registry)
+├── packs/nomatron-agent/   # Network Agent pack (synced to community registry)
+├── docs/                   # Platform guides + screenshots (repo only)
+├── examples/               # Example *.vars.hcl.example files (repo only)
+├── .ci/                    # CI fixtures (repo only)
 ├── CONTRIBUTING.md
 └── .github/
 ```
@@ -35,11 +41,6 @@ macOS (Homebrew):
 ```bash
 brew tap hashicorp/tap
 brew install nomad-pack
-```
-
-Verify:
-
-```bash
 nomad-pack version
 ```
 
@@ -47,39 +48,25 @@ Full install options: [Nomad Pack documentation](https://developer.hashicorp.com
 
 ### 2. Connect to your Nomad cluster
 
-From a machine that can reach your Nomad servers:
-
 ```bash
-export NOMAD_ADDR=https://nomad.example.com:4646   # your Nomad HTTP API
-export NOMAD_TOKEN=<token>                          # required when ACLs are enabled
+export NOMAD_ADDR=https://nomad.example.com:4646
+export NOMAD_TOKEN=<token>   # when ACLs are enabled
 
-nomad node status    # confirm connectivity
+nomad node status
 ```
 
-You need permission to register jobs in the target namespace (default `default`).
-
-### 3. Get the Nomatron pack
-
-**The Nomatron pack is not yet in the HashiCorp community registry** (a PR is planned). When you first run `nomad-pack list`, the CLI downloads the [Nomad Pack Community Registry](https://github.com/hashicorp/nomad-pack-community-registry) — Nomatron will appear there after publish.
+### 3. Get a pack
 
 #### Option A — Clone and run locally
 
 ```bash
 git clone https://github.com/nomatronio/nomatron-pack.git
-cd nomatron-pack/packs/nomatron
+cd nomatron-pack/packs/nomatron          # or packs/nomatron-agent
 
 nomad-pack info .
 ```
 
-#### Option B — Default registry (after publish)
-
-```bash
-nomad-pack registry update default
-nomad-pack info nomatron
-nomad-pack run nomatron --var-file=production.vars.hcl
-```
-
-#### Option C — Custom registry (this repo)
+#### Option B — Custom registry (this repo)
 
 ```bash
 nomad-pack registry add nomatronio \
@@ -88,6 +75,7 @@ nomad-pack registry add nomatronio \
 
 nomad-pack list --registry=nomatronio
 nomad-pack info nomatron --registry=nomatronio
+nomad-pack info nomatron-agent --registry=nomatronio
 ```
 
 Pin a release:
@@ -99,48 +87,43 @@ nomad-pack registry add nomatronio \
   --ref=v0.2.0
 ```
 
-List configured registries:
-
-```bash
-nomad-pack registry list
-```
-
 ### 4. Create your variables file
 
-**Try Nomatron (no license):** run `nomatron server --dev` on your machine — see [Try Nomatron](packs/nomatron/README.md#try-nomatron-not-the-nomad-pack). This pack is for deploying on Nomad (lab or production); copy an example vars file before `nomad-pack run`.
+**Try Nomatron (no license):** run `nomatron server --dev` on your machine — see [Try Nomatron](packs/nomatron/README.md#try-nomatron-not-the-nomad-pack).
 
-```bash
-# After pasting HCL into production.vars.hcl:
-nomad-pack info .
-```
+For the server pack, copy an example from [examples/](examples/) or the [server pack README](packs/nomatron/README.md).
+
+For the agent pack, start from [examples/agent.vars.hcl.example](examples/agent.vars.hcl.example) or the [agent pack README](packs/nomatron-agent/README.md).
 
 ### 5. Plan and deploy
 
 Always **plan** before **run**:
 
 ```bash
-# From packs/nomatron/ (clone) or use pack name nomatron (registry)
+# Server (from packs/nomatron/)
 nomad-pack plan --var-file=production.vars.hcl .
 nomad-pack run  --var-file=production.vars.hcl .
+
+# Agent (from packs/nomatron-agent/)
+nomad-pack plan --var-file=agent.vars.hcl .
+nomad-pack run  --var-file=agent.vars.hcl .
 ```
 
 From a registry:
 
 ```bash
-nomad-pack plan nomatron --var-file=production.vars.hcl
-nomad-pack run  nomatron --var-file=production.vars.hcl
-```
+nomad-pack plan nomatron --var-file=production.vars.hcl --registry=nomatronio
+nomad-pack run  nomatron --var-file=production.vars.hcl --registry=nomatronio
 
-Override individual values:
-
-```bash
-nomad-pack run --var-file=production.vars.hcl --var='count=3' .
+nomad-pack plan nomatron-agent --var-file=agent.vars.hcl --registry=nomatronio
+nomad-pack run  nomatron-agent --var-file=agent.vars.hcl --registry=nomatronio
 ```
 
 After deploy:
 
 ```bash
 nomad job status nomatron
+nomad job status nomatron-agent
 nomad-pack status
 ```
 
@@ -154,11 +137,10 @@ nomad-pack status
 | `nomad-pack destroy nomatron` | Tear down jobs created by a pack deployment |
 | `nomad-pack fmt .` | Format pack templates |
 
-Pack outputs (URLs, next steps) print after a successful `run`. Re-run with the same `--var-file` to upgrade after changing `nomatron_version`.
-
 ---
 
 ## Next steps
 
-1. Read [packs/nomatron/README.md](packs/nomatron/README.md) — choose a deployment profile and copy the matching variables block.
-2. Prepare Nomad clients — [docs/README.md](docs/README.md).
+1. Server: [packs/nomatron/README.md](packs/nomatron/README.md) — choose a deployment profile.
+2. Agent: [packs/nomatron-agent/README.md](packs/nomatron-agent/README.md) — control-plane endpoints and cluster credentials.
+3. Prepare Nomad clients — [docs/README.md](docs/README.md).

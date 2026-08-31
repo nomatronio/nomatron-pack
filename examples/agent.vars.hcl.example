@@ -1,0 +1,37 @@
+# Network Agent pack — copy and fill secrets. Do not commit real tokens.
+#
+#   cd packs/nomatron-agent
+#   nomad-pack plan --var-file=../../examples/agent.vars.hcl.example .
+#   nomad-pack run  --var-file=../../examples/agent.vars.hcl.example .
+
+namespace = "nomatron-agents"
+node_pool = "default"
+
+nomatron_agent_version = "v0.1.0-rc.20"
+runtime                = "docker"
+
+server_addrs   = ["nomatron.example.com:4650"]
+http_base_urls = ["https://nomatron.example.com"]
+
+agent_id = "REPLACE-WITH-AGENT-UUID"
+
+cluster = {
+  cluster_id  = "REPLACE-WITH-CLUSTER-UUID"
+  address     = "https://nomad.internal.example.com:4646"
+  acl_token   = "REPLACE-WITH-NOMAD-ACL-TOKEN"
+  tls_enabled = false
+  skip_verify = false
+}
+
+secrets = {
+  agent_token = "REPLACE-WITH-AGENT-TOKEN"
+}
+
+# Optional dedicated placement (escape $${...} in -var-file HCL):
+# constraints = [
+#   {
+#     attribute = "$${node.class}"
+#     operator  = "="
+#     value     = "infra"
+#   }
+# ]
