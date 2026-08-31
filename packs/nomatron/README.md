@@ -290,7 +290,7 @@ runtime            = "binary"
 
 binary_install_method = "host"
 binary_path           = "/usr/bin/nomatron"
-nomatron_version      = "v0.1.0-rc.21"
+nomatron_version      = "v0.1.0-rc.45"
 
 # Alternative: binary_install_method = "artifact", binary_arch = "amd64"
 
@@ -423,6 +423,8 @@ secrets = {
 ```
 
 Generate Serf encryption key: `nomatron keygen`
+
+Leave `serf.advertise_addr` empty. Use `nomatron_version` `v0.1.0-rc.45` or later so each allocation registers `NOMAD_HOST_IP_serf` (the Nomad client IP) instead of `127.0.0.1`.
 
 ### Quickstart (provision — lab)
 
@@ -720,7 +722,7 @@ Generate `encryption_key` and `serf.encrypt_key` yourself. For production, store
 - `database_mode` — `provision` (lab default) or `byodb`
 - `runtime` — `docker` or `binary`
 - `load_balancer_mode` — `none`, `service`, or `traefik`
-- `nomatron_version` — release tag (default `v0.1.0-rc.20`)
+- `nomatron_version` — release tag (default `v0.1.0-rc.45`; HA on Nomad requires this or later)
 - `count` — server instances
 - `node_pool`, `constraints` — dedicated client placement
 - `server`, `database`, `postgres`, `serf`, `bootstrap` — see `nomad-pack info nomatron`
@@ -736,6 +738,13 @@ Run `nomad-pack info .` (or `nomad-pack info nomatron` from the registry) for th
 | 4649 | HTTP API and Web UI |
 | 4650 | Agent gRPC |
 | 7946 | Serf gossip (HA) |
+
+Leave `serf.advertise_addr` empty. The group port label `serf` interpolates:
+
+- `NOMAD_HOST_IP_serf` — that Nomad client's IP (for example `192.168.3.16`)
+- `NOMAD_HOST_PORT_serf` — the mapped host port (typically `7946`)
+
+Nomatron **v0.1.0-rc.45+** uses those env vars for Serf advertise and for `server_nodes` registration when `bind_addr` is `0.0.0.0`. `serf.retry_join` must still list reachable client IPs, but it is not a substitute: if the host IP env var is missing, registration falls back to `127.0.0.1` and HA nodes collide. Bridge/CNI allocation IPs (`172.26.x`) are not reachable across clients.
 
 Health check: `/api/v1/health?bootstrap=ok`
 

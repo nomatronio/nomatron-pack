@@ -9,7 +9,7 @@ count              = 1
 
 binary_install_method = "host"
 binary_path           = "/usr/bin/nomatron"
-nomatron_version      = "v0.1.0-rc.21"
+nomatron_version      = "v0.1.0-rc.45"
 
 load_balancer_mode = "none"
 register_service   = false

@@ -67,3 +67,5 @@ Allow outbound **53/udp+tcp** (DNS) and NTP as required by your environment.
 - [ ] Postgres **5432/tcp** from all Nomatron clients to writer endpoint
 - [ ] LB → client **4649/tcp** if using a load balancer
 - [ ] `serf.retry_join` addresses match reachable client IPs/hostnames
+- [ ] Leave `serf.advertise_addr` empty so each allocation advertises `NOMAD_HOST_IP_serf` (the Nomad client IP from port label `serf`). Do not advertise bridge/CNI allocation IPs such as `172.26.x` — those are not routable between clients.
+- [ ] Each alloc has `NOMAD_HOST_IP_serf` and `NOMAD_HOST_PORT_serf` in the task environment (pack sets these from the `serf` port). If they are missing, Nomatron rc.45+ registers `127.0.0.1` and HA nodes collide. Use `nomatron_version` `v0.1.0-rc.45` or later.

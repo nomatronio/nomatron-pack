@@ -25,7 +25,7 @@ binary_install_method = "host"
 binary_path           = "/usr/bin/nomatron" # dpkg -L nomatron | rg bin/nomatron
 
 # Pin the version you installed on clients (audit/docs; host method does not download artifacts)
-nomatron_version = "v0.1.0-rc.21"
+nomatron_version = "v0.1.0-rc.45"
 
 # Alternative: let Nomad download the release tarball into each allocation (needs egress to GitHub)
 # binary_install_method = "artifact"
