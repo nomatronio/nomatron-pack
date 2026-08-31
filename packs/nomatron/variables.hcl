@@ -27,9 +27,9 @@ variable "load_balancer_mode" {
 }
 
 variable "nomatron_version" {
-  description = "Nomatron release version tag (for example v0.1.0-rc.20). Used for container image and binary artifact URLs."
+  description = "Nomatron release version tag (for example v0.1.0-rc.45). Used for container image and binary artifact URLs. HA on Nomad requires v0.1.0-rc.45 or later so Serf registration uses NOMAD_HOST_IP_serf."
   type        = string
-  default     = "v0.1.0-rc.20"
+  default     = "v0.1.0-rc.45"
 }
 
 # ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ variable "http_port_static" {
 }
 
 variable "serf_port_static" {
-  description = "Optional static host port for Serf gossip. Recommended for HA."
+  description = "Optional static host port for Serf gossip. Recommended for HA. The group port label serf also interpolates NOMAD_HOST_PORT_serf (typically 7946)."
   type        = number
   default     = 7946
 }
@@ -241,7 +241,7 @@ variable "postgres" {
 # ---------------------------------------------------------------------------
 
 variable "serf" {
-  description = "Serf cluster settings for HA deployments."
+  description = "Serf cluster settings for HA deployments. Leave advertise_addr empty so each allocation uses NOMAD_HOST_IP_serf (the Nomad client IP from port label serf). Do not advertise bridge/CNI allocation IPs. retry_join must list reachable client IPs; that is not a substitute for NOMAD_HOST_IP_serf."
   type = object({
     node_name           = string
     bind_addr           = string

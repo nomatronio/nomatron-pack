@@ -1,3 +1,13 @@
+## Version v0.2.3 (2026-08-31)
+
+### Changed
+
+- Default `nomatron_version` is `v0.1.0-rc.45`. HA on Nomad needs this release (or later) so Serf registration uses the Nomad client IP.
+
+### Fixed
+
+- **Serf host IP registration:** each Nomatron task now sets `NOMAD_HOST_IP_serf` and `NOMAD_HOST_PORT_serf` from the group network port label `serf`. Nomatron rc.45+ writes those values into `server_nodes` when `serf.bind_addr` is `0.0.0.0`. If only `retry_join` is set and the host IP env var is missing, every allocation registers as `127.0.0.1:7946` and hits the unique constraint. Leave `serf.advertise_addr` empty so gossip also advertises the Nomad client IP, not the bridge/CNI address.
+
 ## Version v0.2.2 (2026-08-30)
 
 ### Fixed

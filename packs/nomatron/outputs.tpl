@@ -70,7 +70,8 @@ Nomatron :
 
 [[- if gt (var "count" .) 1 ]]
 HA :
-[] Serf cluster formed — verify retry_join addresses match deployed nodes
+[] Serf cluster formed — retry_join lists Nomad client IPs ; leave serf.advertise_addr empty
+[] Use Nomatron rc.45 or later so each alloc registers NOMAD_HOST_IP_serf, not 127.0.0.1
 [] Nomad spread placed servers on distinct clients(check : nomad job status)
 [[- end ]]
 

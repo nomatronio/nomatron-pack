@@ -259,6 +259,10 @@ EOH
 [[- define "nomatron_server_env_block" -]]
 [[ template "nomatron_secrets_env_template" . ]]
       env {
+        # rc.45+ registers this host IP/port into server_nodes when bind is 0.0.0.0.
+        # Nomad interpolates these from group port "serf". Missing values fall back to 127.0.0.1.
+        NOMAD_HOST_IP_serf   = "${NOMAD_HOST_IP_serf}"
+        NOMAD_HOST_PORT_serf = "${NOMAD_HOST_PORT_serf}"
 [[- if eq (var "secrets_backend" .) "pack_vars" ]]
 [[ template "nomatron_server_env_pack_vars" . ]]
 [[ template "nomatron_db_url_env_pack_vars" . ]]
@@ -401,6 +405,8 @@ serf {
   port = [[ var "serf.port" . ]]
 [[- if ne (var "serf.advertise_addr" .) "" ]]
   advertise_addr = [[ var "serf.advertise_addr" . | quote ]]
+[[- else ]]
+  advertise_addr = "${NOMAD_HOST_IP_serf}"
 [[- end ]]
 [[- if gt (var "count" .) 1 ]]
 [[ template "nomatron_serf_encrypt_key_hcl" . ]]

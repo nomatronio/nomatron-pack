@@ -1,7 +1,9 @@
 # HA reference architecture — multi-server Nomatron + shared external HA PostgreSQL.
 #
 #   cp examples/ha.byodb.vars.hcl.example ha.vars.hcl
-#   # Edit: database writer endpoint, serf.retry_join, secrets, public_hostname
+#   # Edit: database writer endpoint, serf.retry_join (Nomad client IPs), secrets, public_hostname
+#   # Leave serf.advertise_addr empty. Requires nomatron_version v0.1.0-rc.45+ so each
+#   # alloc registers NOMAD_HOST_IP_serf (client IP) instead of 127.0.0.1.
 #   nomad-pack run -var-file=ha.vars.hcl .
 
 deployment_profile = "ha"
@@ -58,7 +60,7 @@ server = {
 serf = {
   node_name           = ""
   bind_addr           = "0.0.0.0"
-  advertise_addr      = ""
+  advertise_addr      = ""          # leave empty — pack interpolates NOMAD_HOST_IP_serf
   port                = 7946
   retry_join          = ["10.0.1.10:7946", "10.0.1.11:7946", "10.0.1.12:7946"]
   retry_join_interval = "30s"
