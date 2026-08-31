@@ -1,3 +1,9 @@
+## Version v0.2.5 (2026-08-31)
+
+### Fixed
+
+- **Serf advertise_addr in nomatron.hcl:** render the Nomad client IP with Consul Template `{{ env "NOMAD_HOST_IP_serf" }}` instead of `${NOMAD_HOST_IP_serf}`. Nomad does not interpolate `${}` inside template `data`, so the literal variable reached Nomatron's HCL parser and failed with "Variables not allowed".
+
 ## Version v0.2.4 (2026-08-31)
 
 ### Fixed

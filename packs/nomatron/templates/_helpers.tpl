@@ -406,7 +406,7 @@ serf {
 [[- if ne (var "serf.advertise_addr" .) "" ]]
   advertise_addr = [[ var "serf.advertise_addr" . | quote ]]
 [[- else ]]
-  advertise_addr = "${NOMAD_HOST_IP_serf}"
+  advertise_addr = "{{ env "NOMAD_HOST_IP_serf" }}"
 [[- end ]]
 [[- if gt (var "count" .) 1 ]]
 [[ template "nomatron_serf_encrypt_key_hcl" . ]]
