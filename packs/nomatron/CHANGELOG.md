@@ -1,3 +1,9 @@
+## Version v0.2.4 (2026-08-31)
+
+### Fixed
+
+- **Community registry CI:** add MPL license headers so HashiCorp copywrite passes, and sync `.ci/vars-*.hcl` into the pack so registry `nomad-pack render` has placeholder secrets.
+
 ## Version v0.2.3 (2026-08-31)
 
 ### Changed

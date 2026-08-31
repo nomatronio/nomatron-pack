@@ -19,7 +19,7 @@ nomatron-pack/
 └── .github/
 ```
 
-The sync script copies **only** the registry pack files. `docs/`, `examples/`, and `.ci/` never leave this repository.
+The sync script copies the registry pack files plus `.ci/vars-*.hcl` (placeholder secrets so HashiCorp `validate.sh` can render the pack). `docs/` and `examples/` never leave this repository.
 
 ## Day-to-day development
 

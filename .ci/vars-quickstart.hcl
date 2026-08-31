@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Nomatron Ltd
+# SPDX-License-Identifier: MPL-2.0
+#
 # CI fixture — lab quickstart with colocated Postgres (database_mode=provision).
 
 deployment_profile = "quickstart"
