@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Nomatron Ltd
+# SPDX-License-Identifier: MPL-2.0
+#
 # CI fixture — production profile with Nomad Variables backend (no secrets in job spec).
 
 deployment_profile = "production"

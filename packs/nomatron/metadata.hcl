@@ -1,13 +1,14 @@
+# Copyright (c) 2026 Nomatron Ltd
+# SPDX-License-Identifier: MPL-2.0
+
 app {
   url = "https://nomatron.io"
 }
 
-# SPDX-License-Identifier: MPL-2.0
-
 pack {
   name        = "nomatron"
   description = "Reference architecture for deploying Nomatron on HashiCorp Nomad — production BYODB, Nomatron HA, and lab quickstart profiles."
-  version     = "0.2.3"
+  version     = "0.2.4"
 }
 
 # Optional: vendor the community Traefik pack for advanced customization.

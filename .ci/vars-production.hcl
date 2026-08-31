@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Nomatron Ltd
+# SPDX-License-Identifier: MPL-2.0
+#
 # CI-only variables for community registry validation (nomad-pack render / nomad validate).
 # Not for deployment — secrets are placeholders.
 
