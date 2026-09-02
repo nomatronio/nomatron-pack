@@ -62,3 +62,7 @@ server = {
   tls_key_file                  = ""
   tls_ca_file                   = ""
 }
+
+# Origin TLS from the same Nomad Variable (Host Agent gRPC passthrough):
+#   nomad var put … tls_cert=@cert.pem tls_key=@key.pem tls_ca=@cert.pem
+# server = { tls_enabled = true, tls_cert_file = "", tls_key_file = "", tls_ca_file = "" }

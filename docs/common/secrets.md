@@ -35,6 +35,35 @@ nomad var put nomad/jobs/nomatron/nomatron-server/nomatron \
 
 Re-run `nomad var put` to update values; allocations restart when `change_mode = "restart"`.
 
+### Origin TLS PEMs (optional)
+
+When Host Agents need Nomatron to speak TLS (gRPC passthrough) while pack vars stay free of secrets, store the PEMs in the **same** Variable and leave `server.tls_cert_file` / `tls_key_file` empty:
+
+```bash
+openssl req -x509 -newkey rsa:4096 -sha256 -days 825 -nodes \
+  -keyout key.pem -out cert.pem \
+  -subj "/CN=nomatron.example.com" \
+  -addext "subjectAltName=DNS:nomatron.example.com"
+
+nomad var put nomad/jobs/nomatron/nomatron-server/nomatron \
+  tls_cert=@cert.pem \
+  tls_key=@key.pem \
+  tls_ca=@cert.pem
+```
+
+```hcl
+server = {
+  tls_enabled   = true
+  tls_cert_file = ""
+  tls_key_file  = ""
+  tls_ca_file   = ""
+}
+```
+
+The pack writes `${NOMAD_SECRETS_DIR}/tls/{cert,key,ca}.pem` at alloc start. The cert SAN must match `agent_grpc_advertise_addr` (and the hostname Traefik uses toward Nomatron). Nomad Variables are small (tens of KiB for the whole item); a typical cert + key + CA fits. Do not put PEMs in pack vars.
+
+With Traefik in front, the pack appends `scheme=https` on the HTTP service. For a private CA, `traefik_origin_insecure_skip_verify = true` (default) skips verify on the Traefik→Nomatron hop. Edge TLS (Pinggy, ALB) is unchanged.
+
 ### 2. Deploy with the pack
 
 ```hcl
@@ -109,6 +138,7 @@ See [examples/production.byodb.vault.vars.hcl.example](../../examples/production
 | `db_url` | BYODB | `NOMATRON_DB_URL` — full Postgres URL with `sslmode=require` |
 | `serf_encrypt_key` | HA (`count > 1`) | Serf `encrypt_key` in `nomatron.hcl` |
 | `root_password` | Optional bootstrap | `NOMATRON_ROOT_PASSWORD` |
+| `tls_cert` / `tls_key` / `tls_ca` | Origin TLS (`server.tls_enabled`, empty file paths) | `${NOMAD_SECRETS_DIR}/tls/*.pem` — rename via `tls_secrets_keys` |
 
 Key names are configurable via `secrets_nomad_var.keys` and `secrets_vault.keys`.
 

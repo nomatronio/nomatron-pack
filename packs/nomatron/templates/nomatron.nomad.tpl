@@ -6,18 +6,18 @@ job [[ template "job_name" . ]] {
   namespace   = [[ var "namespace" . | quote ]]
   type        = "service"
 
-[[ template "job_placement" . ]]
+  [[ template "job_placement" . ]]
 
   [[- if eq (var "database_mode" .) "provision" ]]
   [[- if eq (var "count" .) 1 ]]
   group "nomatron" {
     count = 1
 
-[[ template "group_vault_block" . ]]
+    [[ template "group_vault_block" . ]]
 
-[[ template "group_network" . ]]
+    [[ template "group_network" . ]]
 
-[[ template "nomatron_services" . ]]
+    [[ template "nomatron_services" . ]]
 
     volume "postgres-data" {
       type      = "host"
@@ -32,15 +32,15 @@ job [[ template "job_name" . ]] {
       mode     = "fail"
     }
 
-[[ template "postgres_task" . ]]
+    [[ template "postgres_task" . ]]
 
-[[ template "nomatron_server_task" . ]]
+    [[ template "nomatron_server_task" . ]]
   }
   [[- else ]]
   group "postgres" {
     count = 1
 
-[[ template "postgres_group_network" . ]]
+    [[ template "postgres_group_network" . ]]
 
     volume "postgres-data" {
       type      = "host"
@@ -55,7 +55,7 @@ job [[ template "job_name" . ]] {
       mode     = "fail"
     }
 
-[[ template "postgres_task" . ]]
+    [[ template "postgres_task" . ]]
   }
 
   group "nomatron-server" {
@@ -66,11 +66,11 @@ job [[ template "job_name" . ]] {
       weight    = 100
     }
 
-[[ template "group_vault_block" . ]]
+    [[ template "group_vault_block" . ]]
 
-[[ template "group_network" . ]]
+    [[ template "group_network" . ]]
 
-[[ template "nomatron_services" . ]]
+    [[ template "nomatron_services" . ]]
 
     update {
       max_parallel     = 1
@@ -86,7 +86,7 @@ job [[ template "job_name" . ]] {
       mode     = "fail"
     }
 
-[[ template "nomatron_server_task" . ]]
+    [[ template "nomatron_server_task" . ]]
   }
   [[- end ]]
   [[- else ]]
@@ -100,11 +100,11 @@ job [[ template "job_name" . ]] {
     }
     [[- end ]]
 
-[[ template "group_vault_block" . ]]
+    [[ template "group_vault_block" . ]]
 
-[[ template "group_network" . ]]
+    [[ template "group_network" . ]]
 
-[[ template "nomatron_services" . ]]
+    [[ template "nomatron_services" . ]]
 
     update {
       max_parallel     = 1
@@ -120,7 +120,7 @@ job [[ template "job_name" . ]] {
       mode     = "fail"
     }
 
-[[ template "nomatron_server_task" . ]]
+    [[ template "nomatron_server_task" . ]]
 
     [[- if and (var "bootstrap.auto_init_database" .) (eq (var "database_mode" .) "byodb") (eq (var "count" .) 1) ]]
     task "database-init" {
@@ -159,7 +159,7 @@ job [[ template "job_name" . ]] {
       [[- end ]]
 
       template {
-        data = <<EOH
+        data        = <<EOH
 server {
   port = [[ var "server.port" . ]]
   api_addr = [[ if ne (var "server.api_addr" .) "" ]][[ var "server.api_addr" . | quote ]][[ else ]][[ printf "http://127.0.0.1:%v" (var "server.port" .) | quote ]][[ end ]]
@@ -171,14 +171,14 @@ EOH
         destination = "local/config/nomatron.hcl"
       }
 
-[[ template "nomatron_secrets_env_template" . ]]
+      [[ template "nomatron_secrets_env_template" . ]]
       env {
-[[- if eq (var "secrets_backend" .) "pack_vars" ]]
+        [[- if eq (var "secrets_backend" .) "pack_vars" ]]
         NOMATRON_ENCRYPTION_KEY = [[ var "secrets.encryption_key" . | quote ]]
         NOMATRON_LICENSE_KEY    = [[ var "secrets.license_key" . | quote ]]
         NOMATRON_CLUSTER_KEY    = [[ var "secrets.cluster_key" . | quote ]]
-[[ template "nomatron_db_url_env_pack_vars" . ]]
-[[- end ]]
+        [[ template "nomatron_db_url_env_pack_vars" . ]]
+        [[- end ]]
       }
 
       resources {

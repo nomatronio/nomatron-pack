@@ -29,9 +29,9 @@ job [[ var "traefik.job_name" . | quote ]] {
         image        = "traefik:[[ var "traefik.version" . ]]"
         network_mode = [[ var "traefik.network_mode" . | quote ]]
         [[- if var "register_grpc_service" . ]]
-        ports        = ["http", "admin", "grpc"]
+        ports = ["http", "admin", "grpc"]
         [[- else ]]
-        ports        = ["http", "admin"]
+        ports = ["http", "admin"]
         [[- end ]]
         args = [
           "--api.insecure=true",

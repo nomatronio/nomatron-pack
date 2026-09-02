@@ -72,6 +72,10 @@ Nomatron :
 [] Traefik has a TCP entrypoint named nomatron-grpc ; TCP tunnels target Traefik, not a Nomatron IP
 [] agent_grpc_advertise_addr is the public TCP host : port Host Agents dial
 [] Host Agent gRPC uses TLS with client certificates — Traefik must passthrough ; enable server.tls_enabled with a cert whose SAN matches that hostname
+[[- if and (var "server.tls_enabled" .) (eq (var "server.tls_cert_file" .) "") (eq (var "server.tls_key_file" .) "") (ne (var "secrets_backend" .) "pack_vars") ]]
+[] Origin TLS PEMs in the secrets backend as tls_cert, tls_key, tls_ca(SAN must match agent_grpc_advertise_addr)
+[] Traefik HTTP backends use HTTPS to Nomatron(pack appends scheme = https tags)
+[[- end ]]
 [[- end ]]
 [[- if ne (var "server.api_addr" .) "" ]]
 [] api_addr configured : [[ var "server.api_addr" . ]]

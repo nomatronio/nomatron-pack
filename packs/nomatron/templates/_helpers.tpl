@@ -4,38 +4,38 @@
 
 [[ define "region" -]]
 [[- if var "region" . -]]
-  region = "[[ var "region" . ]]"
+region = "[[ var "region" . ]]"
 [[- end -]]
 [[- end -]]
 
 [[ define "constraints" -]]
 [[ range $idx, $constraint := . ]]
-  constraint {
-    attribute = [[ $constraint.attribute | quote ]]
-    [[ if $constraint.operator -]]
-    operator  = [[ $constraint.operator | quote ]]
-    [[ end -]]
-    value     = [[ $constraint.value | quote ]]
-  }
+constraint {
+  attribute = [[ $constraint.attribute | quote ]]
+  [[ if $constraint.operator -]]
+  operator = [[ $constraint.operator | quote ]]
+  [[ end -]]
+  value = [[ $constraint.value | quote ]]
+}
 [[ end -]]
 [[- end -]]
 
 [[- define "job_placement" -]]
-  node_pool   = [[ var "node_pool" . | quote ]]
+node_pool = [[ var "node_pool" . | quote ]]
 
-  constraint {
-    attribute = "${attr.kernel.name}"
-    value     = "linux"
-  }
+constraint {
+  attribute = "${attr.kernel.name}"
+  value     = "linux"
+}
 [[- if gt (len (var "constraints" .)) 0 ]]
-  [[ template "constraints" (var "constraints" .) ]]
+[[ template "constraints" (var "constraints" .) ]]
 [[- end ]]
 [[- end -]]
 
 [[ define "env_vars" -]]
-        [[- range $idx, $var := . ]]
-        [[ $var.key ]] = [[ $var.value | quote ]]
-        [[- end ]]
+[[- range $idx, $var := . ]]
+[[ $var.key ]] = [[ $var.value | quote ]]
+[[- end ]]
 [[- end ]]
 
 [[- define "validate_deployment" -]]
@@ -135,17 +135,30 @@
 [[- if and (eq $secretsBackend "pack_vars") (eq (var "secrets.encryption_key" .) "") -]]
 [[ fail "secrets.encryption_key is required when secrets_backend=pack_vars. Generate one with: openssl rand -base64 32, or use secrets_backend=nomad_var|vault for production." ]]
 [[- end -]]
+[[- if var "server.tls_enabled" . -]]
+[[- $tlsCert := var "server.tls_cert_file" . -]]
+[[- $tlsKey := var "server.tls_key_file" . -]]
+[[- if and (eq $tlsCert "") (ne $tlsKey "") -]]
+[[ fail "server.tls_enabled requires both tls_cert_file and tls_key_file, or leave both empty to load PEMs from Nomad Variables / Vault (secrets_backend=nomad_var|vault)." ]]
+[[- end -]]
+[[- if and (ne $tlsCert "") (eq $tlsKey "") -]]
+[[ fail "server.tls_enabled requires both tls_cert_file and tls_key_file, or leave both empty to load PEMs from Nomad Variables / Vault (secrets_backend=nomad_var|vault)." ]]
+[[- end -]]
+[[- if and (eq $tlsCert "") (eq $tlsKey "") (eq $secretsBackend "pack_vars") -]]
+[[ fail "server.tls_enabled with secrets_backend=pack_vars requires tls_cert_file and tls_key_file. To inject PEMs at start, use secrets_backend=nomad_var or vault and store tls_cert / tls_key / tls_ca in the Variable or Vault secret." ]]
+[[- end -]]
+[[- end -]]
 [[- end -]]
 
 [[- define "binary_artifact_command" -]]
-local/bin/nomatron_[[ trimPrefix "v" (var "nomatron_version" .) ]]_linux_[[ var "binary_arch" . ]]/nomatron
+local / bin / nomatron_[[ trimPrefix "v" (var "nomatron_version" .) ]]_linux_[[ var "binary_arch" . ]] / nomatron
 [[- end -]]
 
 [[- define "group_vault_block" -]]
 [[- if eq (var "secrets_backend" .) "vault" ]]
-    vault {
-      policies = [[ var "secrets_vault.policies" . | toStringList ]]
-    }
+vault {
+  policies = [[ var "secrets_vault.policies" . | toStringList ]]
+}
 [[- end ]]
 [[- end -]]
 
@@ -163,11 +176,11 @@ local/bin/nomatron_[[ trimPrefix "v" (var "nomatron_version" .) ]]_linux_[[ var 
 [[- $vCluster := coalesce (var "secrets_vault.keys.cluster_key" .) "cluster_key" -]]
 [[- $vDB := coalesce (var "secrets_vault.keys.db_url" .) "db_url" -]]
 [[- $vRoot := coalesce (var "secrets_vault.keys.root_password" .) "root_password" -]]
-      template {
-        destination = "${NOMAD_SECRETS_DIR}/nomatron.env"
-        env         = true
-        change_mode = "restart"
-        data        = <<EOH
+template {
+  destination = "${NOMAD_SECRETS_DIR}/nomatron.env"
+  env         = true
+  change_mode = "restart"
+  data        = <<EOH
 [[- if eq (var "secrets_backend" .) "nomad_var" ]]
 {{- with nomadVar "[[ $path ]]" }}
 NOMATRON_ENCRYPTION_KEY = {{ index . "[[ $kEnc ]]" | toJSON }}
@@ -194,7 +207,57 @@ NOMATRON_ROOT_PASSWORD  = {{ .Data.data.[[ $vRoot ]] | toJSON }}
 {{- end }}
 [[- end ]]
 EOH
-      }
+}
+[[- end ]]
+[[- end -]]
+
+[[- define "nomatron_tls_secrets_templates" -]]
+[[- if and (var "server.tls_enabled" .) (eq (var "server.tls_cert_file" .) "") (eq (var "server.tls_key_file" .) "") (ne (var "secrets_backend" .) "pack_vars") ]]
+[[- $path := var "secrets_nomad_var.path" . -]]
+[[- $vPath := var "secrets_vault.path" . -]]
+[[- $kCert := var "tls_secrets_keys.cert" . -]]
+[[- $kKey := var "tls_secrets_keys.key" . -]]
+[[- $kCA := var "tls_secrets_keys.ca" . -]]
+template {
+  destination = "${NOMAD_SECRETS_DIR}/tls/cert.pem"
+  perms       = "0444"
+  change_mode = "restart"
+  data        = <<EOH
+[[- if eq (var "secrets_backend" .) "nomad_var" ]]
+{{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kCert ]]" }}{{ end }}
+[[- else ]]
+{{- with secret "[[ $vPath ]]" }}{{ index .Data.data "[[ $kCert ]]" }}{{ end }}
+[[- end ]]
+EOH
+}
+
+template {
+  destination = "${NOMAD_SECRETS_DIR}/tls/key.pem"
+  perms       = "0400"
+  change_mode = "restart"
+  data        = <<EOH
+[[- if eq (var "secrets_backend" .) "nomad_var" ]]
+{{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kKey ]]" }}{{ end }}
+[[- else ]]
+{{- with secret "[[ $vPath ]]" }}{{ index .Data.data "[[ $kKey ]]" }}{{ end }}
+[[- end ]]
+EOH
+}
+[[- if ne $kCA "" ]]
+
+template {
+  destination = "${NOMAD_SECRETS_DIR}/tls/ca.pem"
+  perms       = "0444"
+  change_mode = "restart"
+  data        = <<EOH
+[[- if eq (var "secrets_backend" .) "nomad_var" ]]
+{{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kCA ]]" }}{{ end }}
+[[- else ]]
+{{- with secret "[[ $vPath ]]" }}{{ index .Data.data "[[ $kCA ]]" }}{{ end }}
+[[- end ]]
+EOH
+}
+[[- end ]]
 [[- end ]]
 [[- end -]]
 
@@ -205,51 +268,60 @@ EOH
 [[- $vPath := var "secrets_vault.path" . -]]
 [[- $vSerf := coalesce (var "secrets_vault.keys.serf_encrypt_key" .) "serf_encrypt_key" -]]
 [[- if eq (var "secrets_backend" .) "pack_vars" ]]
-  encrypt_key = [[ var "serf.encrypt_key" . | quote ]]
+encrypt_key = [[ var "serf.encrypt_key" . | quote ]]
 [[- else if eq (var "secrets_backend" .) "nomad_var" ]]
-  encrypt_key = {{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kSerf ]]" | toJSON }}{{- end }}
+encrypt_key = { { -with nomadVar "[[ $path ]]" } } { { index."[[ $kSerf ]]" | toJSON } } { { -end } }
 [[- else if eq (var "secrets_backend" .) "vault" ]]
-  encrypt_key = {{- with secret "[[ $vPath ]]" }}{{ .Data.data.[[ $vSerf ]] | toJSON }}{{- end }}
+encrypt_key = { { -with secret "[[ $vPath ]]" } } { {.Data.data.[[ $vSerf ]] | toJSON } } { { -end } }
 [[- end ]]
 [[- end ]]
 [[- end -]]
 
 [[- define "nomatron_database_connection_hcl" -]]
 [[- if eq (var "secrets_backend" .) "pack_vars" ]]
-  connection_string = [[ if and (eq (var "database_mode" .) "provision") (gt (var "count" .) 1) ]][[ if eq (var "service_provider" .) "consul" ]][[ printf "postgres://%s:%s@{{ with service %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ else ]][[ printf "postgres://%s:%s@{{ with nomadService %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ end ]][[ else if eq (var "database_mode" .) "provision" ]][[ printf "postgres://%s:%s@127.0.0.1:5432/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.db_name" .) | quote ]][[ else if ne (var "database.connection_string" .) "" ]][[ var "database.connection_string" . | quote ]][[ else ]][[ printf "postgres://%s:%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.password" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]][[ end ]]
+connection_string = [[ if and (eq (var "database_mode" .) "provision") (gt (var "count" .) 1) ]][[ if eq (var "service_provider" .) "consul" ]][[ printf "postgres://%s:%s@{{ with service %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ else ]][[ printf "postgres://%s:%s@{{ with nomadService %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ end ]][[ else if eq (var "database_mode" .) "provision" ]][[ printf "postgres://%s:%s@127.0.0.1:5432/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.db_name" .) | quote ]][[ else if ne (var "database.connection_string" .) "" ]][[ var "database.connection_string" . | quote ]][[ else ]][[ printf "postgres://%s:%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.password" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]][[ end ]]
 [[- else ]]
-  # Placeholder satisfies Nomatron HCL decode; NOMATRON_DB_URL from Nomad Variable/Vault overrides at runtime.
-  connection_string = [[ printf "postgres://%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]]
+# Placeholder satisfies Nomatron HCL decode; NOMATRON_DB_URL from Nomad Variable/Vault overrides at runtime.
+connection_string = [[ printf "postgres://%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]]
 [[- end ]]
 [[- end -]]
 
 [[- define "nomatron_server_env_pack_vars" -]]
-        NOMATRON_ENCRYPTION_KEY = [[ var "secrets.encryption_key" . | quote ]]
-        NOMATRON_LICENSE_KEY    = [[ var "secrets.license_key" . | quote ]]
-        NOMATRON_CLUSTER_KEY    = [[ var "secrets.cluster_key" . | quote ]]
+NOMATRON_ENCRYPTION_KEY = [[ var "secrets.encryption_key" . | quote ]]
+NOMATRON_LICENSE_KEY    = [[ var "secrets.license_key" . | quote ]]
+NOMATRON_CLUSTER_KEY    = [[ var "secrets.cluster_key" . | quote ]]
 [[- if ne (var "bootstrap.root_username" .) "" ]]
-        NOMATRON_ROOT_USERNAME  = [[ var "bootstrap.root_username" . | quote ]]
+NOMATRON_ROOT_USERNAME = [[ var "bootstrap.root_username" . | quote ]]
 [[- end ]]
 [[- if ne (var "bootstrap.root_password" .) "" ]]
-        NOMATRON_ROOT_PASSWORD  = [[ var "bootstrap.root_password" . | quote ]]
+NOMATRON_ROOT_PASSWORD = [[ var "bootstrap.root_password" . | quote ]]
 [[- end ]]
 [[- end -]]
 
 [[- define "nomatron_service_tags" -]]
-[[- if gt (len (var "service_tags" .)) 0 -]]
-[[ var "service_tags" . | toStringList ]]
-[[- else -]]
+[[- $tags := var "service_tags" . -]]
+[[- if eq (len $tags) 0 -]]
 [[- $hostname := var "public_hostname" . -]]
 [[- if eq $hostname "" -]]
 [[- $hostname = "nomatron.example.com" -]]
 [[- end -]]
-[[- $tags := list
+[[- $tags = list
   "traefik.enable=true"
   (printf "traefik.http.routers.nomatron.rule=Host(`%s`)" $hostname)
   "traefik.http.services.nomatron.loadbalancer.server.port=4649"
 -]]
-[[ $tags | toStringList ]]
 [[- end -]]
+[[- if var "server.tls_enabled" . -]]
+[[- $origin := list "traefik.http.services.nomatron.loadbalancer.server.scheme=https" -]]
+[[- if var "traefik_origin_insecure_skip_verify" . -]]
+[[- $origin = concat $origin (list
+  "traefik.http.serversTransports.nomatron-origin.insecureSkipVerify=true"
+  "traefik.http.services.nomatron.loadbalancer.serversTransport=nomatron-origin"
+) -]]
+[[- end -]]
+[[- $tags = concat $tags $origin -]]
+[[- end -]]
+[[ $tags | toStringList ]]
 [[- end -]]
 
 [[- define "nomatron_grpc_service_tags" -]]
@@ -268,111 +340,112 @@ EOH
 [[- end -]]
 
 [[- define "nomatron_db_url_env_pack_vars" -]]
-        NOMATRON_DB_URL         = [[ if and (eq (var "database_mode" .) "provision") (gt (var "count" .) 1) ]][[ if eq (var "service_provider" .) "consul" ]][[ printf "postgres://%s:%s@{{ with service %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ else ]][[ printf "postgres://%s:%s@{{ with nomadService %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ end ]][[ else if eq (var "database_mode" .) "provision" ]][[ printf "postgres://%s:%s@127.0.0.1:5432/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.db_name" .) | quote ]][[ else if ne (var "database.connection_string" .) "" ]][[ var "database.connection_string" . | quote ]][[ else if ne (var "database.host" .) "" ]][[ printf "postgres://%s:%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.password" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]][[ end ]]
+NOMATRON_DB_URL = [[ if and (eq (var "database_mode" .) "provision") (gt (var "count" .) 1) ]][[ if eq (var "service_provider" .) "consul" ]][[ printf "postgres://%s:%s@{{ with service %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ else ]][[ printf "postgres://%s:%s@{{ with nomadService %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ end ]][[ else if eq (var "database_mode" .) "provision" ]][[ printf "postgres://%s:%s@127.0.0.1:5432/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.db_name" .) | quote ]][[ else if ne (var "database.connection_string" .) "" ]][[ var "database.connection_string" . | quote ]][[ else if ne (var "database.host" .) "" ]][[ printf "postgres://%s:%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.password" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]][[ end ]]
 [[- end -]]
 
 [[- define "nomatron_server_env_block" -]]
 [[ template "nomatron_secrets_env_template" . ]]
-      env {
-        # rc.45+ registers this host IP/port into server_nodes when bind is 0.0.0.0.
-        # Nomad interpolates these from group port "serf". Missing values fall back to 127.0.0.1.
-        NOMAD_HOST_IP_serf   = "${NOMAD_HOST_IP_serf}"
-        NOMAD_HOST_PORT_serf = "${NOMAD_HOST_PORT_serf}"
-[[- if eq (var "secrets_backend" .) "pack_vars" ]]
-[[ template "nomatron_server_env_pack_vars" . ]]
-[[ template "nomatron_db_url_env_pack_vars" . ]]
-[[- else ]]
-[[- if ne (var "bootstrap.root_username" .) "" ]]
-        NOMATRON_ROOT_USERNAME  = [[ var "bootstrap.root_username" . | quote ]]
-[[- end ]]
-[[- end ]]
-[[- if ne (var "agent_grpc_advertise_addr" .) "" ]]
-        NOMATRON_AGENT_GRPC_ADVERTISE_ADDR = [[ var "agent_grpc_advertise_addr" . | quote ]]
-[[- end ]]
-[[ template "env_vars" (var "extra_env_vars" .) ]]
-      }
+[[ template "nomatron_tls_secrets_templates" . ]]
+env {
+  # rc.45+ registers this host IP/port into server_nodes when bind is 0.0.0.0.
+  # Nomad interpolates these from group port "serf". Missing values fall back to 127.0.0.1.
+  NOMAD_HOST_IP_serf   = "${NOMAD_HOST_IP_serf}"
+  NOMAD_HOST_PORT_serf = "${NOMAD_HOST_PORT_serf}"
+  [[- if eq (var "secrets_backend" .) "pack_vars" ]]
+  [[ template "nomatron_server_env_pack_vars" . ]]
+  [[ template "nomatron_db_url_env_pack_vars" . ]]
+  [[- else ]]
+  [[- if ne (var "bootstrap.root_username" .) "" ]]
+  NOMATRON_ROOT_USERNAME = [[ var "bootstrap.root_username" . | quote ]]
+  [[- end ]]
+  [[- end ]]
+  [[- if ne (var "agent_grpc_advertise_addr" .) "" ]]
+  NOMATRON_AGENT_GRPC_ADVERTISE_ADDR = [[ var "agent_grpc_advertise_addr" . | quote ]]
+  [[- end ]]
+  [[ template "env_vars" (var "extra_env_vars" .) ]]
+}
 [[- end -]]
 
 [[- define "postgres_task" -]]
-    task "postgres" {
-      driver = "docker"
+task "postgres" {
+  driver = "docker"
 
-      config {
-        image = "postgres:[[ var "postgres.image_tag" . ]]"
-        ports = ["db"]
-      }
+  config {
+    image = "postgres:[[ var "postgres.image_tag" . ]]"
+    ports = ["db"]
+  }
 
-      volume_mount {
-        volume      = "postgres-data"
-        destination = "/var/lib/postgresql/data"
-        read_only   = false
-      }
+  volume_mount {
+    volume      = "postgres-data"
+    destination = "/var/lib/postgresql/data"
+    read_only   = false
+  }
 
-      env {
-        POSTGRES_DB       = [[ var "postgres.db_name" . | quote ]]
-        POSTGRES_USER     = [[ var "postgres.username" . | quote ]]
-        POSTGRES_PASSWORD = [[ var "postgres.password" . | quote ]]
-        PGDATA            = "/var/lib/postgresql/data"
-      }
+  env {
+    POSTGRES_DB       = [[ var "postgres.db_name" . | quote ]]
+    POSTGRES_USER     = [[ var "postgres.username" . | quote ]]
+    POSTGRES_PASSWORD = [[ var "postgres.password" . | quote ]]
+    PGDATA            = "/var/lib/postgresql/data"
+  }
 
-      resources {
-        cpu    = [[ var "postgres.cpu" . ]]
-        memory = [[ var "postgres.memory" . ]]
-      }
+  resources {
+    cpu    = [[ var "postgres.cpu" . ]]
+    memory = [[ var "postgres.memory" . ]]
+  }
 
-      service {
-        name     = [[ var "postgres.service_name" . | quote ]]
-        port     = "db"
-        provider = [[ var "service_provider" . | quote ]]
-        tags     = ["postgres", "nomatron-internal"]
-[[- if and (eq (var "database_mode" .) "provision") (gt (var "count" .) 1) ]]
-        address_mode = "host"
-[[- end ]]
+  service {
+    name     = [[ var "postgres.service_name" . | quote ]]
+    port     = "db"
+    provider = [[ var "service_provider" . | quote ]]
+    tags     = ["postgres", "nomatron-internal"]
+    [[- if and (eq (var "database_mode" .) "provision") (gt (var "count" .) 1) ]]
+    address_mode = "host"
+    [[- end ]]
 
-        check {
-          name     = "postgres-tcp"
-          type     = "tcp"
-          interval = "10s"
-          timeout  = "2s"
-        }
-      }
+    check {
+      name     = "postgres-tcp"
+      type     = "tcp"
+      interval = "10s"
+      timeout  = "2s"
     }
+  }
+}
 [[- end -]]
 
 [[- define "nomatron_server_task" -]]
-    task "nomatron" {
-      driver = [[ if eq (var "runtime" .) "docker" -]]"docker"[[- else -]]"exec"[[- end ]]
+task "nomatron" {
+  driver = [[ if eq (var "runtime" .) "docker" -]] "docker" [[- else -]] "exec" [[- end ]]
 
-[[- if eq (var "runtime" .) "docker" ]]
-      config {
-        image = "ghcr.io/nomatronio/nomatron-releases/nomatron:[[ var "nomatron_version" . ]]"
-        ports = ["http", "grpc", "serf"]
-        args  = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
-      }
-[[- else if eq (var "binary_install_method" .) "artifact" ]]
-      artifact {
-        source      = "https://github.com/nomatronio/nomatron-releases/releases/download/[[ var "nomatron_version" . ]]/nomatron_[[ trimPrefix "v" (var "nomatron_version" .) ]]_linux_[[ var "binary_arch" . ]].tar.gz"
-        destination = "local/bin"
-      }
+  [[- if eq (var "runtime" .) "docker" ]]
+  config {
+    image = "ghcr.io/nomatronio/nomatron-releases/nomatron:[[ var "nomatron_version" . ]]"
+    ports = ["http", "grpc", "serf"]
+    args  = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
+  }
+  [[- else if eq (var "binary_install_method" .) "artifact" ]]
+  artifact {
+    source      = "https://github.com/nomatronio/nomatron-releases/releases/download/[[ var "nomatron_version" . ]]/nomatron_[[ trimPrefix "v" (var "nomatron_version" .) ]]_linux_[[ var "binary_arch" . ]].tar.gz"
+    destination = "local/bin"
+  }
 
-      config {
-        command = "[[ template "binary_artifact_command" . ]]"
-        args    = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
-      }
-[[- else ]]
-      config {
-        command = [[ var "binary_path" . | quote ]]
-        args    = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
-      }
-[[- end ]]
+  config {
+    command = "[[ template "binary_artifact_command" . ]]"
+    args    = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
+  }
+  [[- else ]]
+  config {
+    command = [[ var "binary_path" . | quote ]]
+    args    = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
+  }
+  [[- end ]]
 
-      resources {
-        cpu    = [[ var "nomatron_resources.cpu" . ]]
-        memory = [[ var "nomatron_resources.memory" . ]]
-      }
+  resources {
+    cpu    = [[ var "nomatron_resources.cpu" . ]]
+    memory = [[ var "nomatron_resources.memory" . ]]
+  }
 
-      template {
-        data = <<EOH
+  template {
+    data        = <<EOH
 server {
   port = [[ var "server.port" . ]]
   api_addr = [[ if ne (var "server.api_addr" .) "" ]][[ var "server.api_addr" . | quote ]][[ else if ne (var "public_hostname" .) "" ]][[ printf "%s://%s" (var "public_scheme" .) (var "public_hostname" .) | quote ]][[ else ]][[ printf "http://127.0.0.1:%v" (var "server.port" .) | quote ]][[ end ]]
@@ -390,6 +463,13 @@ server {
 [[- end ]]
 [[- if var "server.tls_enabled" . ]]
   tls_enabled = true
+[[- if and (var "server.tls_enabled" .) (eq (var "server.tls_cert_file" .) "") (eq (var "server.tls_key_file" .) "") (ne (var "secrets_backend" .) "pack_vars") ]]
+  tls_cert_file = "{{ env "NOMAD_SECRETS_DIR" }}/tls/cert.pem"
+  tls_key_file = "{{ env "NOMAD_SECRETS_DIR" }}/tls/key.pem"
+[[- if ne (var "tls_secrets_keys.ca" .) "" ]]
+  tls_ca_file = "{{ env "NOMAD_SECRETS_DIR" }}/tls/ca.pem"
+[[- end ]]
+[[- else ]]
 [[- if ne (var "server.tls_cert_file" .) "" ]]
   tls_cert_file = [[ var "server.tls_cert_file" . | quote ]]
 [[- end ]]
@@ -398,6 +478,7 @@ server {
 [[- end ]]
 [[- if ne (var "server.tls_ca_file" .) "" ]]
   tls_ca_file = [[ var "server.tls_ca_file" . | quote ]]
+[[- end ]]
 [[- end ]]
 [[- else ]]
   tls_enabled = false
@@ -477,63 +558,67 @@ telemetry {
 [[- end ]]
 }
 EOH
-        destination = "local/config/nomatron.hcl"
-        change_mode = "restart"
-      }
+    destination = "local/config/nomatron.hcl"
+    change_mode = "restart"
+  }
 
-[[ template "nomatron_server_env_block" . ]]
-    }
+  [[ template "nomatron_server_env_block" . ]]
+}
 [[- end -]]
 
 [[- define "effective_api_addr" -]]
 [[- if ne (var "server.api_addr" .) "" -]]
 [[ var "server.api_addr" . ]]
 [[- else if ne (var "public_hostname" .) "" -]]
-[[ var "public_scheme" . ]]://[[ var "public_hostname" . ]]
+[[ var "public_scheme" . ]] : //[[ var "public_hostname" . ]]
 [[- else -]]
-http://127.0.0.1:[[ var "server.port" . ]]
+http : //127.0.0.1:[[ var "server.port" . ]]
 [[- end -]]
 [[- end -]]
 
 [[- define "nomatron_services" -]]
-    [[- $lbMode := var "load_balancer_mode" . -]]
-    [[- if and (var "register_service" .) (or (eq $lbMode "service") (eq $lbMode "traefik")) ]]
+[[- $lbMode := var "load_balancer_mode" . -]]
+[[- if and (var "register_service" .) (or (eq $lbMode "service") (eq $lbMode "traefik")) ]]
 [[ template "nomatron_service_block" . ]]
-    [[- end ]]
-    [[- if var "register_grpc_service" . ]]
+[[- end ]]
+[[- if var "register_grpc_service" . ]]
 [[ template "nomatron_grpc_service_block" . ]]
-    [[- end ]]
+[[- end ]]
 [[- end -]]
 
 [[- define "nomatron_service_block" -]]
-      service {
-        name     = [[ var "service_name" . | quote ]]
-        port     = "http"
-        tags     = [[ template "nomatron_service_tags" . ]]
-        provider = [[ var "service_provider" . | quote ]]
+service {
+  name     = [[ var "service_name" . | quote ]]
+  port     = "http"
+  tags     = [[ template "nomatron_service_tags" . ]]
+  provider = [[ var "service_provider" . | quote ]]
 
-        check {
-          name     = "nomatron-health"
-          type     = "http"
-          path     = "/api/v1/health?bootstrap=ok"
-          interval = "10s"
-          timeout  = "3s"
-        }
-      }
+  check {
+    name     = "nomatron-health"
+    type     = "http"
+    path     = "/api/v1/health?bootstrap=ok"
+    interval = "10s"
+    timeout  = "3s"
+    [[- if var "server.tls_enabled" . ]]
+    protocol        = "https"
+    tls_skip_verify = true
+    [[- end ]]
+  }
+}
 [[- end -]]
 
 [[- define "nomatron_grpc_service_block" -]]
-      service {
-        name     = [[ var "grpc_service_name" . | quote ]]
-        port     = "grpc"
-        tags     = [[ template "nomatron_grpc_service_tags" . ]]
-        provider = [[ var "service_provider" . | quote ]]
+service {
+  name     = [[ var "grpc_service_name" . | quote ]]
+  port     = "grpc"
+  tags     = [[ template "nomatron_grpc_service_tags" . ]]
+  provider = [[ var "service_provider" . | quote ]]
 
-        check {
-          name     = "nomatron-grpc"
-          type     = "tcp"
-          interval = "10s"
-          timeout  = "2s"
-        }
-      }
+  check {
+    name     = "nomatron-grpc"
+    type     = "tcp"
+    interval = "10s"
+    timeout  = "2s"
+  }
+}
 [[- end -]]

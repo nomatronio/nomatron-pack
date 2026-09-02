@@ -50,7 +50,7 @@ Related vars:
 | `public_scheme` | `https` when TLS terminates at LB or Traefik |
 | `server.api_addr` | Full URL Nomatron uses in links/OAuth callbacks — usually `https://nomatron.example.com` |
 | `server.trusted_origins` | Browser origins allowed for CSRF (UI login/forms) — usually `["https://nomatron.example.com"]` |
-| `server.tls_enabled` | `false` when TLS terminates at LB/Traefik; `true` when Nomatron terminates TLS |
+| `server.tls_enabled` | `false` when TLS terminates only at LB/Traefik/Pinggy; `true` when Nomatron also speaks TLS (required for Host Agent gRPC passthrough). Leave `tls_cert_file` empty to load PEMs from Nomad Variables. |
 
 ## Option A — Cloud load balancer (ALB, App Gateway, GLB, Octavia)
 
@@ -307,6 +307,10 @@ TCP tunnels (Pinggy TCP, cloud NLB) must target **Traefik on the load-balancer c
 ### TLS
 
 Host Agents always dial gRPC with TLS and present a client certificate. Traefik must **passthrough** TLS (the default tags). Nomatron gRPC TLS is the same flag as HTTP: set `server.tls_enabled = true` with a certificate whose SAN matches `agent_grpc_advertise_addr`. Terminating TLS at Traefik breaks client-certificate authentication.
+
+Leave `tls_cert_file` / `tls_key_file` empty and store `tls_cert`, `tls_key`, and `tls_ca` in the Nomad Variable (or Vault). The pack writes them under `${NOMAD_SECRETS_DIR}/tls/` at start. See [Origin TLS PEMs](secrets.md#origin-tls-pems-optional).
+
+When origin TLS is on, Traefik must speak **HTTPS to Nomatron** on 4649. The pack appends `scheme=https` tags (and, by default, skip-verify for a private CA). Edge TLS at Pinggy or ALB is unchanged.
 
 After changing `agent_grpc_advertise_addr`, repair or recreate Host Agent jobs so they pick up the advertised gRPC address.
 

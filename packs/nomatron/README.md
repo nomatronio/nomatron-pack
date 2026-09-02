@@ -621,7 +621,7 @@ server = {
 }
 ```
 
-Advanced: set `server.tls_enabled = true` and `tls_cert_file` / `tls_key_file` when Nomatron terminates TLS directly (no LB). The pack does not mount certificates — you provide paths on the client.
+Advanced: set `server.tls_enabled = true` for origin TLS (required for Host Agent gRPC passthrough). Leave `tls_cert_file` / `tls_key_file` empty to load PEMs from Nomad Variables or Vault — see [secrets](https://github.com/nomatronio/nomatron-pack/blob/main/docs/common/secrets.md#origin-tls-pems-optional). Traefik then uses HTTPS to Nomatron; edge TLS (ALB, Pinggy) can stay in front.
 
 ### CSRF and `trusted_origins`
 
@@ -728,6 +728,7 @@ Generate `encryption_key` and `serf.encrypt_key` yourself. For production, store
 - `load_balancer_mode` — `none`, `service`, or `traefik`
 - `register_grpc_service` — Traefik TCP service for Host Agent gRPC (default `false`)
 - `agent_grpc_advertise_addr` — public TCP `host:port` Host Agents dial (not the HTTPS URL)
+- `server.tls_enabled` — origin TLS; empty cert paths load PEMs from Nomad Variables (`tls_cert` / `tls_key` / `tls_ca`)
 - `nomatron_version` — release tag (default `v0.1.0-rc.45`; HA on Nomad requires this or later)
 - `count` — server instances
 - `node_pool`, `constraints` — dedicated client placement

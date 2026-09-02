@@ -19,6 +19,8 @@ http_port_static   = 4649
 # Host Agent gRPC through Traefik TCP (when load_balancer_mode = "service"):
 # register_grpc_service      = true
 # agent_grpc_advertise_addr  = "grpc.example.com:4650"
+# Origin TLS from Nomad Variables: server.tls_enabled = true and empty tls_*_file
+#   nomad var put … tls_cert=@cert.pem tls_key=@key.pem tls_ca=@cert.pem
 
 # Dedicated clients — see examples/dedicated-nodes.vars.hcl.example
 node_pool = "nomatron"

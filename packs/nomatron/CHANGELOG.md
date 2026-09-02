@@ -1,3 +1,10 @@
+## Version v0.2.7 (2026-09-02)
+
+### Added
+
+- **Origin TLS from Nomad Variables / Vault:** when `server.tls_enabled = true` and `tls_cert_file` / `tls_key_file` are empty, the pack writes `tls_cert`, `tls_key`, and `tls_ca` from the secrets backend onto `${NOMAD_SECRETS_DIR}/tls/` at alloc start. Do not put PEMs in pack vars or the job spec.
+- Traefik HTTP tags use `scheme=https` when origin TLS is on (optional `traefik_origin_insecure_skip_verify` for a private CA).
+
 ## Version v0.2.6 (2026-09-02)
 
 ### Added

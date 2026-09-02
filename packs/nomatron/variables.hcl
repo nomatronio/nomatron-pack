@@ -211,6 +211,26 @@ variable "server" {
   }
 }
 
+variable "tls_secrets_keys" {
+  description = "Nomad Variable or Vault data keys for origin TLS PEMs when server.tls_enabled is true and tls_cert_file/tls_key_file are empty. Written to NOMAD_SECRETS_DIR at alloc start. Set ca to \"\" to skip tls_ca_file."
+  type = object({
+    cert = string
+    key  = string
+    ca   = string
+  })
+  default = {
+    cert = "tls_cert"
+    key  = "tls_key"
+    ca   = "tls_ca"
+  }
+}
+
+variable "traefik_origin_insecure_skip_verify" {
+  description = "When server.tls_enabled, append Traefik tags so the Traefik→Nomatron hop uses HTTPS and skips origin cert verify (private CA). Set false if Traefik trusts the origin CA."
+  type        = bool
+  default     = true
+}
+
 # ---------------------------------------------------------------------------
 # Database configuration (database_mode=byodb)
 # ---------------------------------------------------------------------------
