@@ -233,7 +233,7 @@ EOH
 
 template {
   destination = "${NOMAD_SECRETS_DIR}/tls/key.pem"
-  perms       = "0400"
+  perms       = "0444"
   change_mode = "restart"
   data        = <<EOH
 [[- if eq (var "secrets_backend" .) "nomad_var" ]]

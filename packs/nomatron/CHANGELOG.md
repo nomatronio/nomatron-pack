@@ -1,3 +1,9 @@
+## Version v0.2.9 (2026-09-02)
+
+### Fixed
+
+- **TLS key permissions:** render `key.pem` as `0444`. The Nomatron image runs as Distroless `nonroot` (uid 65532); Nomad writes alloc secrets as root, so `0400` caused `open /secrets/tls/key.pem: permission denied`. The file stays in `NOMAD_SECRETS_DIR` (not the alloc `local/` tree).
+
 ## Version v0.2.8 (2026-09-02)
 
 ### Fixed
