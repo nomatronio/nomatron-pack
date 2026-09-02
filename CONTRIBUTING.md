@@ -29,10 +29,11 @@ The sync script copies the registry pack files plus `.ci/vars-*.hcl` (placeholde
 
 ```bash
 cd packs/nomatron
-nomad-pack fmt .
 nomad-pack render --var-file=../../examples/production.byodb.vars.hcl.example . > /dev/null
 nomad-pack plan  --var-file=../../examples/production.byodb.vars.hcl.example .
 ```
+
+Do **not** run `nomad-pack fmt` on this pack. It rewrites Consul Template `{{` / `$tags` inside Nomad `template` blocks and produces jobs that fail Nomatron HCL parse (`Unsupported operator` on `| toJSON`).
 
 4. Bump `pack.version` in [`packs/nomatron/metadata.hcl`](packs/nomatron/metadata.hcl) and update [`packs/nomatron/CHANGELOG.md`](packs/nomatron/CHANGELOG.md).
 5. Open a PR.

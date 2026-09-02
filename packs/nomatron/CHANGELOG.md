@@ -1,3 +1,9 @@
+## Version v0.2.8 (2026-09-02)
+
+### Fixed
+
+- **HA `encrypt_key` HCL:** `nomad-pack fmt` split Consul Template `{{` delimiters in the Serf encrypt_key stanza. Nomatron then parsed a literal `| toJSON` as a bitwise OR (`Unsupported operator`). Do not run `nomad-pack fmt` on templates that embed `{{` Nomad/Consul Template.
+
 ## Version v0.2.7 (2026-09-02)
 
 ### Added

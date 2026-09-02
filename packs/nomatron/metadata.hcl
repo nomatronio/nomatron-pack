@@ -8,7 +8,7 @@ app {
 pack {
   name        = "nomatron"
   description = "Reference architecture for deploying Nomatron on HashiCorp Nomad — production BYODB, Nomatron HA, and lab quickstart profiles."
-  version     = "0.2.7"
+  version     = "0.2.8"
 }
 
 # Optional: vendor the community Traefik pack for advanced customization.
