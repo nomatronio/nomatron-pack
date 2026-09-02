@@ -145,8 +145,10 @@ constraints = [
 # http_port_static   = 4649
 
 # Existing Traefik/Fabio on Nomad:
-# load_balancer_mode = "service"
-# register_service   = true
+# load_balancer_mode    = "service"
+# register_service      = true
+# register_grpc_service = true   # Host Agent gRPC via Traefik TCP; see load-balancing.md
+# agent_grpc_advertise_addr = "grpc.example.com:4650"
 ```
 
 ### Production (BYODB, Docker)
@@ -594,6 +596,8 @@ See [load balancing guide](https://github.com/nomatronio/nomatron-pack/tree/main
 
 **Cloud production default:** ALB → each client on **4649** — no Traefik required.
 
+Host Agent gRPC is a **separate TCP** path (`register_grpc_service`, `agent_grpc_advertise_addr`). See [Host Agent gRPC](https://github.com/nomatronio/nomatron-pack/blob/main/docs/common/load-balancing.md#host-agent-grpc-traefik-tcp).
+
 ### TLS
 
 Nomatron listens **HTTP on 4649** inside the task (`server.tls_enabled = false` in production examples). User-facing TLS terminates **in front** of Nomatron:
@@ -722,6 +726,8 @@ Generate `encryption_key` and `serf.encrypt_key` yourself. For production, store
 - `database_mode` — `provision` (lab default) or `byodb`
 - `runtime` — `docker` or `binary`
 - `load_balancer_mode` — `none`, `service`, or `traefik`
+- `register_grpc_service` — Traefik TCP service for Host Agent gRPC (default `false`)
+- `agent_grpc_advertise_addr` — public TCP `host:port` Host Agents dial (not the HTTPS URL)
 - `nomatron_version` — release tag (default `v0.1.0-rc.45`; HA on Nomad requires this or later)
 - `count` — server instances
 - `node_pool`, `constraints` — dedicated client placement
@@ -736,8 +742,10 @@ Run `nomad-pack info .` (or `nomad-pack info nomatron` from the registry) for th
 | Port | Purpose |
 |---|---|
 | 4649 | HTTP API and Web UI |
-| 4650 | Agent gRPC |
+| 4650 | Agent gRPC (task listen port; Traefik TCP entrypoint when using Host Agents) |
 | 7946 | Serf gossip (HA) |
+
+Host Agents enroll over HTTPS and then dial **gRPC over TCP**. Do not advertise the HTTPS reverse proxy (`:443`) as the gRPC address — set `agent_grpc_advertise_addr` and `register_grpc_service`. See [Host Agent gRPC](https://github.com/nomatronio/nomatron-pack/blob/main/docs/common/load-balancing.md#host-agent-grpc-traefik-tcp).
 
 Leave `serf.advertise_addr` empty. The group port label `serf` interpolates:
 

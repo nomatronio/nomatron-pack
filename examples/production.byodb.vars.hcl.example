@@ -14,8 +14,10 @@ register_service     = false
 http_port_static     = 4649
 
 # If using Traefik/Fabio on Nomad instead, use:
-# load_balancer_mode = "service"
-# register_service   = true
+# load_balancer_mode    = "service"
+# register_service      = true
+# register_grpc_service = true
+# agent_grpc_advertise_addr = "grpc.example.com:4650"
 
 # Dedicated clients — merge from examples/dedicated-nodes.vars.hcl.example
 node_pool = "nomatron"

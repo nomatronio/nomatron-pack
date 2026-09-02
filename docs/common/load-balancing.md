@@ -43,6 +43,9 @@ Related vars:
 |---|---|
 | `http_port_static = 4649` | **`none`** mode — fixed host port for cloud LB target groups |
 | `register_service = true` | **`service`** or **`traefik`** — ignored in **`none`** mode |
+| `register_grpc_service = true` | Separate Nomad service for Host Agent gRPC (Traefik TCP). Default `false`. |
+| `agent_grpc_advertise_addr` | Public TCP `host:port` Host Agents dial. Required when the HTTP URL is HTTPS on `:443`. |
+| `grpc_port_static` | Optional static host gRPC port. Leave `0` when Traefik on the same client binds `4650`. |
 | `public_hostname` | DNS name users type (e.g. `nomatron.example.com`) |
 | `public_scheme` | `https` when TLS terminates at LB or Traefik |
 | `server.api_addr` | Full URL Nomatron uses in links/OAuth callbacks — usually `https://nomatron.example.com` |
@@ -226,7 +229,7 @@ Configure this path on ALB target groups, Traefik, and Nomad service checks (aut
 
 ## TLS, api_addr, and CSRF
 
-Nomatron listens HTTP on **4649** inside the task when `server.tls_enabled = false` (production default). TLS terminates at the **load balancer or Traefik/Fabio**. Postgres TLS is separate — use `database.sslmode = require` for production/HA (enforced by the pack).
+Nomatron listens HTTP on **4649** inside the task when `server.tls_enabled = false` (production default). TLS terminates at the **load balancer or Traefik/Fabio**. Postgres TLS is separate — use `database.sslmode = require` for production/HA (enforced by the pack). Host Agent **gRPC** still needs TLS on Nomatron when Traefik passthrough is used — see [Host Agent gRPC](#host-agent-grpc-traefik-tcp).
 
 Set these to the **public URL users type in the browser** (scheme + hostname):
 
@@ -249,6 +252,67 @@ Browser  Origin: https://nomatron.example.com
 **Pack Traefik:** bundled Traefik is HTTP :80 only until you add TLS. Match `trusted_origins` to what users actually browse.
 
 **Multiple URLs:** add each origin, e.g. `["https://nomatron.example.com", "https://nomatron.internal.corp.example.com"]`.
+
+## Host Agent gRPC (Traefik TCP)
+
+The HTTP API and the Host Agent **gRPC control stream** are different listeners. Host Agents enroll over HTTPS (`server.api_addr`) and then open a **TLS gRPC** connection (HTTP/2 ALPN `h2`) to a **TCP** address. Pointing gRPC at an HTTPS reverse proxy on `:443` fails with `missing selected ALPN property`.
+
+Keep the HTTP path you already have. Add a **second** front door for gRPC:
+
+```text
+HTTPS ──► Traefik HTTP ──► Nomatron :4649     (UI, API, Host Agent enroll)
+TCP    ──► Traefik TCP  ──► Nomatron :4650    (Host Agent control stream)
+```
+
+### Pack settings (`service` or `traefik` mode)
+
+```hcl
+load_balancer_mode     = "service"   # or "traefik"
+register_service       = true
+register_grpc_service  = true
+# Leave grpc_port_static = 0 so Nomad assigns a dynamic host port.
+# Do not set 4650 on a client that also binds Traefik's nomatron-grpc entrypoint.
+
+agent_grpc_advertise_addr = "xxxxx.a.pinggy.io:12345"  # public TCP host:port
+```
+
+Default gRPC tags (unless you override `grpc_service_tags`):
+
+```text
+traefik.enable=true
+traefik.tcp.routers.nomatron-grpc.entrypoints=nomatron-grpc
+traefik.tcp.routers.nomatron-grpc.rule=HostSNI(`*`)
+traefik.tcp.routers.nomatron-grpc.tls=true
+traefik.tcp.routers.nomatron-grpc.tls.passthrough=true
+```
+
+All HA allocations must use the **same** `grpc_service_name` (default `nomatron-grpc`) so Traefik load-balances them. Do **not** add TCP tags to the HTTP `nomatron` service.
+
+### Traefik (existing job or pack Traefik)
+
+The pack does not change a Traefik job you already run (`load_balancer_mode=service`). Add a TCP entrypoint named **`nomatron-grpc`**:
+
+```yaml
+entryPoints:
+  nomatron-grpc:
+    address: ":4650"
+```
+
+`load_balancer_mode=traefik` adds that entrypoint on `traefik_grpc_port` (default `4650`) when `register_grpc_service=true`.
+
+TCP tunnels (Pinggy TCP, cloud NLB) must target **Traefik on the load-balancer client**, not one Nomatron allocation IP. If Pinggy and Traefik share a Nomad client, bind Pinggy to `127.0.0.1:4650`.
+
+**Port clash:** if a Nomatron allocation on the Traefik client also publishes host `:4650`, Traefik cannot bind the entrypoint. Leave `grpc_port_static=0` (dynamic) or set `traefik_grpc_port` to something else (for example `14650`) and point the tunnel there.
+
+### TLS
+
+Host Agents always dial gRPC with TLS and present a client certificate. Traefik must **passthrough** TLS (the default tags). Nomatron gRPC TLS is the same flag as HTTP: set `server.tls_enabled = true` with a certificate whose SAN matches `agent_grpc_advertise_addr`. Terminating TLS at Traefik breaks client-certificate authentication.
+
+After changing `agent_grpc_advertise_addr`, repair or recreate Host Agent jobs so they pick up the advertised gRPC address.
+
+### Cloud TCP load balancer (`none` mode)
+
+Use a **TCP** target group (not HTTP) on each client. Set `grpc_port_static` to a stable host port (typically `4650` when Traefik is not on those clients) and `agent_grpc_advertise_addr` to the NLB hostname and port. You can leave `register_grpc_service=false`.
 
 ## Related docs
 

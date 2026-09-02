@@ -22,5 +22,7 @@ constraints = [
 # http_port_static   = 4649
 
 # --- Existing Traefik/Fabio on Nomad ---
-# load_balancer_mode = "service"
-# register_service   = true
+# load_balancer_mode     = "service"
+# register_service       = true
+# register_grpc_service  = true
+# agent_grpc_advertise_addr = "grpc.example.com:4650"

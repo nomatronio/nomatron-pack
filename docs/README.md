@@ -17,7 +17,7 @@ Step-by-step instructions to prepare **Linux Nomad clients** for the [Nomatron N
 | Topic | Guide | Why |
 |---|---|---|
 | **Dedicated clients** | [dedicated-nodes-and-placement.md](common/dedicated-nodes-and-placement.md) | `node_pool`, `client.meta`, pack `constraints`, Nomad Enterprise guardrails |
-| **Load balancing** | [load-balancing.md](common/load-balancing.md) | ALB vs Traefik vs Fabio vs direct — **you pick one entry path** |
+| **Load balancing** | [load-balancing.md](common/load-balancing.md) | ALB vs Traefik vs Fabio vs direct — **you pick one HTTP entry path**; Host Agent gRPC is a separate TCP path |
 | **Client software** | [nomad-client-setup.md](common/nomad-client-setup.md) | Docker, CNI, full client config walkthrough |
 | **Firewall ports** | [ports-and-firewall.md](common/ports-and-firewall.md) | Port matrix for Nomatron, Serf, LB, Postgres |
 | **Secrets** | [secrets.md](common/secrets.md) | Nomad Variables (recommended) or Vault — not pack vars in production |

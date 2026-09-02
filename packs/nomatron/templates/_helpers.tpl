@@ -252,6 +252,21 @@ EOH
 [[- end -]]
 [[- end -]]
 
+[[- define "nomatron_grpc_service_tags" -]]
+[[- if gt (len (var "grpc_service_tags" .)) 0 -]]
+[[ var "grpc_service_tags" . | toStringList ]]
+[[- else -]]
+[[- $tags := list
+  "traefik.enable=true"
+  "traefik.tcp.routers.nomatron-grpc.entrypoints=nomatron-grpc"
+  "traefik.tcp.routers.nomatron-grpc.rule=HostSNI(`*`)"
+  "traefik.tcp.routers.nomatron-grpc.tls=true"
+  "traefik.tcp.routers.nomatron-grpc.tls.passthrough=true"
+-]]
+[[ $tags | toStringList ]]
+[[- end -]]
+[[- end -]]
+
 [[- define "nomatron_db_url_env_pack_vars" -]]
         NOMATRON_DB_URL         = [[ if and (eq (var "database_mode" .) "provision") (gt (var "count" .) 1) ]][[ if eq (var "service_provider" .) "consul" ]][[ printf "postgres://%s:%s@{{ with service %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ else ]][[ printf "postgres://%s:%s@{{ with nomadService %s }}{{ with index . 0 }}{{ .Address }}:{{ .Port }}{{ end }}{{ end }}/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.service_name" . | quote) (var "postgres.db_name" .) | quote ]][[ end ]][[ else if eq (var "database_mode" .) "provision" ]][[ printf "postgres://%s:%s@127.0.0.1:5432/%s?sslmode=disable" (var "postgres.username" .) (var "postgres.password" .) (var "postgres.db_name" .) | quote ]][[ else if ne (var "database.connection_string" .) "" ]][[ var "database.connection_string" . | quote ]][[ else if ne (var "database.host" .) "" ]][[ printf "postgres://%s:%s@%s:%v/%s?sslmode=%s" (var "database.username" .) (var "database.password" .) (var "database.host" .) (var "database.port" .) (var "database.name" .) (var "database.sslmode" .) | quote ]][[ end ]]
 [[- end -]]
@@ -270,6 +285,9 @@ EOH
 [[- if ne (var "bootstrap.root_username" .) "" ]]
         NOMATRON_ROOT_USERNAME  = [[ var "bootstrap.root_username" . | quote ]]
 [[- end ]]
+[[- end ]]
+[[- if ne (var "agent_grpc_advertise_addr" .) "" ]]
+        NOMATRON_AGENT_GRPC_ADVERTISE_ADDR = [[ var "agent_grpc_advertise_addr" . | quote ]]
 [[- end ]]
 [[ template "env_vars" (var "extra_env_vars" .) ]]
       }
@@ -366,6 +384,9 @@ server {
   idle_timeout_seconds = [[ var "server.idle_timeout_seconds" . ]]
 [[- if gt (len (var "server.trusted_origins" .)) 0 ]]
   trusted_origins = [[ var "server.trusted_origins" . | toStringList ]]
+[[- end ]]
+[[- if ne (var "agent_grpc_advertise_addr" .) "" ]]
+  agent_grpc_advertise_addr = [[ var "agent_grpc_advertise_addr" . | quote ]]
 [[- end ]]
 [[- if var "server.tls_enabled" . ]]
   tls_enabled = true
@@ -474,6 +495,16 @@ http://127.0.0.1:[[ var "server.port" . ]]
 [[- end -]]
 [[- end -]]
 
+[[- define "nomatron_services" -]]
+    [[- $lbMode := var "load_balancer_mode" . -]]
+    [[- if and (var "register_service" .) (or (eq $lbMode "service") (eq $lbMode "traefik")) ]]
+[[ template "nomatron_service_block" . ]]
+    [[- end ]]
+    [[- if var "register_grpc_service" . ]]
+[[ template "nomatron_grpc_service_block" . ]]
+    [[- end ]]
+[[- end -]]
+
 [[- define "nomatron_service_block" -]]
       service {
         name     = [[ var "service_name" . | quote ]]
@@ -487,6 +518,22 @@ http://127.0.0.1:[[ var "server.port" . ]]
           path     = "/api/v1/health?bootstrap=ok"
           interval = "10s"
           timeout  = "3s"
+        }
+      }
+[[- end -]]
+
+[[- define "nomatron_grpc_service_block" -]]
+      service {
+        name     = [[ var "grpc_service_name" . | quote ]]
+        port     = "grpc"
+        tags     = [[ template "nomatron_grpc_service_tags" . ]]
+        provider = [[ var "service_provider" . | quote ]]
+
+        check {
+          name     = "nomatron-grpc"
+          type     = "tcp"
+          interval = "10s"
+          timeout  = "2s"
         }
       }
 [[- end -]]

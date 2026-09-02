@@ -1,0 +1,1 @@
+{"meta":{"request_id":"f180fead-a3b5-4983-8f3a-74deb5ecc6c5","request_time":"2026-08-04T11:18:35.48043175Z","status":"success","code":"OK"},"data":{"ok":false,"api_addr":"http://192.168.3.10:4649","components":{"database":{"detail":"database exists but Nomatron is not initialized","initialized":"false","state":"uninitialized","status":"uninitialized"}}},"warnings":[],"errors":[]}

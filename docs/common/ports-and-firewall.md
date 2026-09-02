@@ -7,7 +7,7 @@ Use this matrix when configuring cloud security groups, NSGs, GCP firewall rules
 | Port | Protocol | Direction | Source | Destination | Purpose |
 |---|---|---|---|---|---|
 | **4649** | TCP | Inbound | Load balancer and/or admin CIDR | Nomad client | HTTP API and Web UI |
-| **4650** | TCP | Inbound | Admin / agent CIDR (optional) | Nomad client | Agent gRPC |
+| **4650** | TCP | Inbound | Traefik / TCP LB / agent CIDR | Nomad client **or Traefik client** | Agent gRPC. Host Agents must not dial the HTTPS `:443` front door. With Traefik TCP, open this port on the **Traefik** client; Nomatron gRPC can stay on a dynamic host port (`grpc_port_static=0`). |
 | **7946** | TCP + UDP | Inbound | Same Nomad client SG / Serf peer CIDR | Nomad client | Serf gossip (**HA only**, `count > 1`) |
 
 When `load_balancer_mode=none` with a **cloud LB** (ALB, App Gateway, GLB, Octavia, NSX ALB), users reach Nomatron through the LB on port 4649 on each client — **no Traefik required**. Set `http_port_static=4649` in pack vars.
@@ -23,7 +23,7 @@ When `load_balancer_mode=none` without a cloud LB (homelab), you may publish a s
 | **80** | TCP | Inbound | Internet or corp network | LB | HTTP (Traefik/Fabio/ALB) |
 | **443** | TCP | Inbound | Internet or corp network | LB | HTTPS |
 
-LB → Nomad client: **4649/tcp** from LB security group to client security group.
+LB → Nomad client: **4649/tcp** from LB security group to client security group (HTTP). For Host Agents, also allow **TCP** from the gRPC load balancer or tunnel to Traefik's `nomatron-grpc` entrypoint (default **4650/tcp** on the Traefik client), then Traefik → Nomatron alloc gRPC ports.
 
 ## PostgreSQL (BYODB — production)
 
@@ -66,6 +66,7 @@ Allow outbound **53/udp+tcp** (DNS) and NTP as required by your environment.
 - [ ] Serf **7946/tcp+udp** open between all Nomad clients that run Nomatron (`count > 1`)
 - [ ] Postgres **5432/tcp** from all Nomatron clients to writer endpoint
 - [ ] LB → client **4649/tcp** if using a load balancer
+- [ ] Host Agent gRPC: TCP to Traefik (or `grpc_port_static`) — not HTTPS `:443`; set `agent_grpc_advertise_addr`
 - [ ] `serf.retry_join` addresses match reachable client IPs/hostnames
 - [ ] Leave `serf.advertise_addr` empty so each allocation advertises `NOMAD_HOST_IP_serf` (the Nomad client IP from port label `serf`). Do not advertise bridge/CNI allocation IPs such as `172.26.x` — those are not routable between clients.
 - [ ] Each alloc has `NOMAD_HOST_IP_serf` and `NOMAD_HOST_PORT_serf` in the task environment (pack sets these from the `serf` port). If they are missing, Nomatron rc.45+ registers `127.0.0.1` and HA nodes collide. Use `nomatron_version` `v0.1.0-rc.45` or later.

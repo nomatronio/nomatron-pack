@@ -11,6 +11,9 @@
       }
       port "grpc" {
         to = [[ add (var "server.port" .) 1 ]]
+        [[- if gt (var "grpc_port_static" .) 0 ]]
+        static = [[ var "grpc_port_static" . ]]
+        [[- end ]]
       }
       # Label "serf" interpolates NOMAD_HOST_IP_serf and NOMAD_HOST_PORT_serf into the task.
       port "serf" {

@@ -1,3 +1,12 @@
+## Version v0.2.6 (2026-09-02)
+
+### Added
+
+- **Host Agent gRPC via Traefik TCP:** opt-in `register_grpc_service` registers a separate Nomad service (`nomatron-grpc`) with Traefik TCP passthrough tags. Do not put TCP tags on the HTTP `nomatron` service.
+- **`agent_grpc_advertise_addr`:** public `host:port` Host Agents dial. When empty, Nomatron advertises the API hostname on port 443, which is the HTTP(S) reverse proxy — not gRPC.
+- **`grpc_port_static`:** optional static host port for agent gRPC. Leave `0` (dynamic) when Traefik on the same client already binds `4650`.
+- Pack Traefik (`load_balancer_mode=traefik`) adds a `nomatron-grpc` TCP entrypoint on `traefik_grpc_port` (default `4650`) when `register_grpc_service` is true.
+
 ## Version v0.2.5 (2026-08-31)
 
 ### Fixed

@@ -109,6 +109,42 @@ variable "http_port_static" {
   default     = 0
 }
 
+variable "grpc_port_static" {
+  description = "Optional static host port for agent gRPC. Leave 0 so Nomad assigns a dynamic host port (recommended when Traefik on the same client already binds 4650). Do not set 4650 on a client that also runs the Traefik TCP entrypoint."
+  type        = number
+  default     = 0
+}
+
+variable "agent_grpc_advertise_addr" {
+  description = "Public host:port Host Agents dial for gRPC (TCP load balancer or tunnel in front of Traefik). When empty, Nomatron defaults to the API hostname on port 443, which is wrong for HTTP(S) reverse proxies. Example: xxxxx.a.pinggy.io:12345"
+  type        = string
+  default     = ""
+}
+
+variable "register_grpc_service" {
+  description = "Register a Nomad service for agent gRPC with Traefik TCP passthrough tags. Requires a Traefik TCP entrypoint named nomatron-grpc."
+  type        = bool
+  default     = false
+}
+
+variable "grpc_service_name" {
+  description = "Nomad service name for agent gRPC. Use the same name on every HA alloc so Traefik load-balances them."
+  type        = string
+  default     = "nomatron-grpc"
+}
+
+variable "grpc_service_tags" {
+  description = "Service tags for the gRPC service. When empty, Traefik TCP passthrough tags are generated for entrypoint nomatron-grpc."
+  type        = list(string)
+  default     = []
+}
+
+variable "traefik_grpc_port" {
+  description = "TCP entrypoint port on the pack-deployed Traefik job (load_balancer_mode=traefik). Pinggy/TCP LBs should target this port on the Traefik client, not a Nomatron IP."
+  type        = number
+  default     = 4650
+}
+
 variable "serf_port_static" {
   description = "Optional static host port for Serf gossip. Recommended for HA. The group port label serf also interpolates NOMAD_HOST_PORT_serf (typically 7946)."
   type        = number

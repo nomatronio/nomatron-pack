@@ -21,7 +21,15 @@ Database : BYODB writer — [[ if ne (var "database.host" .) "" ]][[ var "databa
 [[- end ]]
 
 [[- if eq (var "load_balancer_mode" .) "traefik" ]]
-Traefik job : [[ var "traefik.job_name" . ]](HTTP port [[ var "traefik.http_port" . ]])
+Traefik job : [[ var "traefik.job_name" . ]](HTTP port [[ var "traefik.http_port" . ]][[- if var "register_grpc_service" . ]], gRPC TCP port [[ var "traefik_grpc_port" . ]][[- end ]])
+[[- end ]]
+[[- if var "register_grpc_service" . ]]
+Host Agent gRPC service : [[ var "grpc_service_name" . ]]
+[[- if ne (var "agent_grpc_advertise_addr" .) "" ]]
+Host Agent gRPC advertise : [[ var "agent_grpc_advertise_addr" . ]]
+[[- else ]]
+Host Agent gRPC advertise : not set — Nomatron will advertise the API hostname on :443. Set agent_grpc_advertise_addr to the TCP load balancer or tunnel (not the HTTPS URL).
+[[- end ]]
 [[- end ]]
 
 ---Post-deploy runbook - --
@@ -60,6 +68,11 @@ Database :
 
 Nomatron :
 [] server.api_addr matches the URL users and webhooks use
+[[- if var "register_grpc_service" . ]]
+[] Traefik has a TCP entrypoint named nomatron-grpc; TCP tunnels target Traefik, not a Nomatron IP
+[] agent_grpc_advertise_addr is the public TCP host:port Host Agents dial
+[] Host Agent gRPC uses TLS with client certificates — Traefik must passthrough; enable server.tls_enabled with a cert whose SAN matches that hostname
+[[- end ]]
 [[- if ne (var "server.api_addr" .) "" ]]
 [] api_addr configured : [[ var "server.api_addr" . ]]
 [[- else if ne (var "public_hostname" .) "" ]]

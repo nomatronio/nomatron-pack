@@ -1,0 +1,31 @@
+ID            = nomatron
+Name          = nomatron
+Submit Date   = 2026-08-04T04:17:07-07:00
+Type          = service
+Priority      = 50
+Datacenters   = *
+Namespace     = default
+Node Pool     = infra
+Status        = running
+Periodic      = false
+Parameterized = false
+
+Summary
+Task Group       Queued  Starting  Running  Failed  Complete  Lost  Unknown
+nomatron-server  0       0         1        0       0         0     0
+
+Latest Deployment
+ID          = b3206770
+Status      = successful
+Description = Deployment completed successfully
+
+Deployed
+Task Group       Auto Revert  Desired  Placed  Healthy  Unhealthy  Progress Deadline
+nomatron-server  true         1        1       1        0          2026-08-04T11:27:38Z
+
+Allocations
+ID        Node ID   Task Group       Version  Desired  Status   Created    Modified
+c6d57f15  821a172d  nomatron-server  0        run      running  1m24s ago  53s ago
+
+
+==> View job details and metrics in the Web UI: http://192.168.3.11:4646/ui/jobs/nomatron@default

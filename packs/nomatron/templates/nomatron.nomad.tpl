@@ -17,10 +17,7 @@ job [[ template "job_name" . ]] {
 
 [[ template "group_network" . ]]
 
-    [[- $lbMode := var "load_balancer_mode" . -]]
-    [[- if and (var "register_service" .) (or (eq $lbMode "service") (eq $lbMode "traefik")) ]]
-[[ template "nomatron_service_block" . ]]
-    [[- end ]]
+[[ template "nomatron_services" . ]]
 
     volume "postgres-data" {
       type      = "host"
@@ -73,10 +70,7 @@ job [[ template "job_name" . ]] {
 
 [[ template "group_network" . ]]
 
-    [[- $lbMode := var "load_balancer_mode" . -]]
-    [[- if and (var "register_service" .) (or (eq $lbMode "service") (eq $lbMode "traefik")) ]]
-[[ template "nomatron_service_block" . ]]
-    [[- end ]]
+[[ template "nomatron_services" . ]]
 
     update {
       max_parallel     = 1
@@ -110,10 +104,7 @@ job [[ template "job_name" . ]] {
 
 [[ template "group_network" . ]]
 
-    [[- $lbMode := var "load_balancer_mode" . -]]
-    [[- if and (var "register_service" .) (or (eq $lbMode "service") (eq $lbMode "traefik")) ]]
-[[ template "nomatron_service_block" . ]]
-    [[- end ]]
+[[ template "nomatron_services" . ]]
 
     update {
       max_parallel     = 1

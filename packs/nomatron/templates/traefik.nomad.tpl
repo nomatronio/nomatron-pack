@@ -15,6 +15,11 @@ job [[ var "traefik.job_name" . | quote ]] {
       port "admin" {
         static = [[ var "traefik.admin_port" . ]]
       }
+      [[- if var "register_grpc_service" . ]]
+      port "grpc" {
+        static = [[ var "traefik_grpc_port" . ]]
+      }
+      [[- end ]]
     }
 
     task "traefik" {
@@ -23,12 +28,19 @@ job [[ var "traefik.job_name" . | quote ]] {
       config {
         image        = "traefik:[[ var "traefik.version" . ]]"
         network_mode = [[ var "traefik.network_mode" . | quote ]]
+        [[- if var "register_grpc_service" . ]]
+        ports        = ["http", "admin", "grpc"]
+        [[- else ]]
         ports        = ["http", "admin"]
+        [[- end ]]
         args = [
           "--api.insecure=true",
           "--providers.nomad=true",
           "--providers.nomad.endpoint.address=http://127.0.0.1:4646",
           "--entrypoints.web.address=:[[ var "traefik.http_port" . ]]",
+          [[- if var "register_grpc_service" . ]]
+          "--entrypoints.nomatron-grpc.address=:[[ var "traefik_grpc_port" . ]]",
+          [[- end ]]
         ]
       }
 

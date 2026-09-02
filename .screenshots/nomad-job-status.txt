@@ -1,0 +1,52 @@
+ID            = nomatron
+Name          = nomatron
+Submit Date   = 2026-08-04T04:17:07-07:00
+Type          = service
+Priority      = 50
+Datacenters   = *
+Namespace     = default
+Node Pool     = infra
+Status        = running
+Periodic      = false
+Parameterized = false
+
+Summary
+Task Group       Queued  Starting  Running  Failed  Complete  Lost  Unknown
+nomatron-server  0       0         1        0       0         0     0
+
+Evaluations
+ID                                    Priority  Triggered By        Status    Placement Failures
+6e2821e3-4842-bcb1-49b2-0400e8b87edc  50        deployment-watcher  complete  false
+489545ff-0e2d-8089-8fd9-1cc07462db2b  50        job-register        complete  false
+3fd47cdc-ebdc-0680-a51c-650deb475457  50        job-deregister      complete  false
+f232d0fd-8391-95ed-320f-8c294f03078d  50        job-register        complete  false
+70d0e31f-2ebb-f63e-2a01-bf86641e9d8d  50        job-deregister      complete  false
+38aebe4a-7754-fb5f-8065-018ba7e5fcc8  50        alloc-reschedule    complete  false
+1cd3b928-6877-c627-f2d9-75c2a754ba4d  50        deployment-watcher  complete  false
+e8752660-2daf-c669-3e61-ecf2ce327d76  50        alloc-failure       complete  false
+f1eff464-e29c-36ad-0c1d-176e63b12c70  50        job-register        complete  false
+c8296ccd-bd29-987a-5946-590649c5f367  50        job-deregister      complete  false
+cea3da63-ae11-0bff-4309-590d3272b3ae  50        alloc-reschedule    complete  false
+76c168f1-8f59-736b-ad3e-bd89bd858e5e  50        deployment-watcher  complete  false
+2c4686af-296e-e813-d6f5-86b650c05ea3  50        alloc-failure       complete  false
+f537d8cf-dd01-22c6-2856-caea83f5b65f  50        alloc-reschedule    complete  false
+77880dd0-c5ba-3cc5-c910-84fc110284ad  50        deployment-watcher  complete  false
+53649b4a-68d4-aec7-9283-483fc5178bff  50        alloc-failure       complete  false
+016e1715-1aaa-b8b7-7edf-f7c9ea6608a3  50        job-register        complete  false
+f2606906-4515-f62b-8346-dec8a758d2ff  50        job-deregister      complete  false
+
+Latest Deployment
+ID          = b3206770-d403-30fa-f02f-a96f39a8e3b8
+Status      = successful
+Description = Deployment completed successfully
+
+Deployed
+Task Group       Auto Revert  Desired  Placed  Healthy  Unhealthy  Progress Deadline
+nomatron-server  true         1        1       1        0          2026-08-04T11:27:38Z
+
+Allocations
+ID                                    Eval ID                               Node ID                               Node Name  Task Group       Version  Desired  Status   Created                    Modified
+c6d57f15-b87d-c833-e551-2d8756978402  489545ff-0e2d-8089-8fd9-1cc07462db2b  821a172d-058a-7afb-fb4c-da0358051ad5  infra-01   nomatron-server  0        run      running  2026-08-04T04:17:07-07:00  2026-08-04T04:17:39-07:00
+
+
+==> View job details and metrics in the Web UI: http://192.168.3.11:4646/ui/jobs/nomatron@default
