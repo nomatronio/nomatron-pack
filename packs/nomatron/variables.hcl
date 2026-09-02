@@ -226,9 +226,9 @@ variable "tls_secrets_keys" {
 }
 
 variable "traefik_origin_insecure_skip_verify" {
-  description = "When server.tls_enabled, append Traefik tags so the Traefik→Nomatron hop uses HTTPS and skips origin cert verify (private CA). Set false if Traefik trusts the origin CA."
+  description = "Deprecated no-op. Nomad tags cannot define a Traefik ServersTransport. For a private origin CA, set Traefik static serversTransport.insecureSkipVerify=true (or a file-provider transport). The pack still appends scheme=https when server.tls_enabled is true."
   type        = bool
-  default     = true
+  default     = false
 }
 
 # ---------------------------------------------------------------------------

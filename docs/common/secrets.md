@@ -62,7 +62,7 @@ server = {
 
 The pack writes `${NOMAD_SECRETS_DIR}/tls/{cert,key,ca}.pem` at alloc start. The cert SAN must match `agent_grpc_advertise_addr` (and the hostname Traefik uses toward Nomatron). Nomad Variables are small (tens of KiB for the whole item); a typical cert + key + CA fits. Do not put PEMs in pack vars.
 
-With Traefik in front, the pack appends `scheme=https` on the HTTP service. For a private CA, `traefik_origin_insecure_skip_verify = true` (default) skips verify on the Traefik→Nomatron hop. Edge TLS (Pinggy, ALB) is unchanged.
+With Traefik in front, the pack appends `scheme=https` on the HTTP service. For a private CA, set Traefik static `serversTransport.insecureSkipVerify=true`. Do not put skip-verify on Nomad tags — Traefik ignores that and the HTTP router 404s. Edge TLS (Pinggy, ALB) is unchanged.
 
 ### 2. Deploy with the pack
 

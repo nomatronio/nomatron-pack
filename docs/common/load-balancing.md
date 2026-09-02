@@ -310,7 +310,14 @@ Host Agents always dial gRPC with TLS and present a client certificate. Traefik 
 
 Leave `tls_cert_file` / `tls_key_file` empty and store `tls_cert`, `tls_key`, and `tls_ca` in the Nomad Variable (or Vault). The pack writes them under `${NOMAD_SECRETS_DIR}/tls/` at start. See [Origin TLS PEMs](secrets.md#origin-tls-pems-optional).
 
-When origin TLS is on, Traefik must speak **HTTPS to Nomatron** on 4649. The pack appends `scheme=https` tags (and, by default, skip-verify for a private CA). Edge TLS at Pinggy or ALB is unchanged.
+When origin TLS is on, Traefik must speak **HTTPS to Nomatron**. The pack appends `scheme=https`. Nomad tags **cannot** define a Traefik ServersTransport; a missing transport drops the HTTP router (404). For a private/self-signed origin cert, set this on the Traefik job (static config), not as Nomad service tags:
+
+```yaml
+serversTransport:
+  insecureSkipVerify: true
+```
+
+Or Traefik args: `--serversTransport.insecureSkipVerify=true`. Edge TLS at Pinggy or ALB is unchanged.
 
 After changing `agent_grpc_advertise_addr`, repair or recreate Host Agent jobs so they pick up the advertised gRPC address.
 

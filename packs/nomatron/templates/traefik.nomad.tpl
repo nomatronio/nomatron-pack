@@ -38,6 +38,9 @@ job [[ var "traefik.job_name" . | quote ]] {
           "--providers.nomad=true",
           "--providers.nomad.endpoint.address=http://127.0.0.1:4646",
           "--entrypoints.web.address=:[[ var "traefik.http_port" . ]]",
+          [[- if var "server.tls_enabled" . ]]
+          "--serversTransport.insecureSkipVerify=true",
+          [[- end ]]
           [[- if var "register_grpc_service" . ]]
           "--entrypoints.nomatron-grpc.address=:[[ var "traefik_grpc_port" . ]]",
           [[- end ]]

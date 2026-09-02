@@ -1,3 +1,9 @@
+## Version v0.2.10 (2026-09-02)
+
+### Fixed
+
+- **Traefik 404 with origin TLS:** stop emitting Nomad `serversTransport` tags. Traefik's Nomad provider cannot create that resource, so the HTTP router disappeared. Skip-verify for a private origin CA belongs in Traefik static config (`serversTransport.insecureSkipVerify=true`).
+
 ## Version v0.2.9 (2026-09-02)
 
 ### Fixed

@@ -312,14 +312,7 @@ NOMATRON_ROOT_PASSWORD = [[ var "bootstrap.root_password" . | quote ]]
 -]]
 [[- end -]]
 [[- if var "server.tls_enabled" . -]]
-[[- $origin := list "traefik.http.services.nomatron.loadbalancer.server.scheme=https" -]]
-[[- if var "traefik_origin_insecure_skip_verify" . -]]
-[[- $origin = concat $origin (list
-  "traefik.http.serversTransports.nomatron-origin.insecureSkipVerify=true"
-  "traefik.http.services.nomatron.loadbalancer.serversTransport=nomatron-origin"
-) -]]
-[[- end -]]
-[[- $tags = concat $tags $origin -]]
+[[- $tags = concat $tags (list "traefik.http.services.nomatron.loadbalancer.server.scheme=https") -]]
 [[- end -]]
 [[ $tags | toStringList ]]
 [[- end -]]
