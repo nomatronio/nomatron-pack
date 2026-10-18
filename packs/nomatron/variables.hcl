@@ -397,6 +397,12 @@ variable "bootstrap" {
   }
 }
 
+variable "secret_change_mode" {
+  description = "Nomad template change_mode for secret, license, and TLS templates (nomad_var or vault only). Empty (default): noop when count > 1 (HA — avoids simultaneous restarts on rotation), restart when count = 1. Set restart to auto-restart all servers on secret change; set noop to require a manual rolling restart in HA."
+  type        = string
+  default     = ""
+}
+
 variable "secrets_backend" {
   description = "How sensitive values reach the task: pack_vars (rendered into the job spec — dev/homelab only), nomad_var (Nomad Variables at runtime — recommended for production), or vault (HashiCorp Vault KV at runtime)."
   type        = string

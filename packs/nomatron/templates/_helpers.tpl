@@ -106,6 +106,10 @@ constraint {
 [[ fail "secrets_backend=vault requires secrets_vault.path (for example secret/data/nomatron/production)." ]]
 [[- end -]]
 [[- end -]]
+[[- $secretChangeMode := var "secret_change_mode" . -]]
+[[- if and (ne $secretChangeMode "") (ne $secretChangeMode "restart") (ne $secretChangeMode "noop") -]]
+[[ fail "secret_change_mode must be empty, restart, or noop." ]]
+[[- end -]]
 [[- if eq $dbMode "byodb" -]]
 [[- if eq $secretsBackend "pack_vars" -]]
 [[- if and (eq (var "database.connection_string" .) "") (eq (var "database.host" .) "") -]]
@@ -162,6 +166,15 @@ vault {
 [[- end ]]
 [[- end -]]
 
+[[- define "nomatron_secret_change_mode" -]]
+[[- $mode := var "secret_change_mode" . -]]
+[[- if eq $mode "" -]]
+[[- if gt (var "count" .) 1 -]]noop[[- else -]]restart[[- end -]]
+[[- else -]]
+[[ $mode ]]
+[[- end -]]
+[[- end -]]
+
 [[- define "nomatron_secrets_env_template" -]]
 [[- if ne (var "secrets_backend" .) "pack_vars" ]]
 [[- $path := var "secrets_nomad_var.path" . -]]
@@ -179,7 +192,7 @@ vault {
 template {
   destination = "${NOMAD_SECRETS_DIR}/nomatron.env"
   env         = true
-  change_mode = "restart"
+  change_mode = "[[ template "nomatron_secret_change_mode" . ]]"
   data        = <<EOH
 [[- if eq (var "secrets_backend" .) "nomad_var" ]]
 {{- with nomadVar "[[ $path ]]" }}
@@ -221,7 +234,7 @@ EOH
 template {
   destination = "${NOMAD_SECRETS_DIR}/tls/cert.pem"
   perms       = "0444"
-  change_mode = "restart"
+  change_mode = "[[ template "nomatron_secret_change_mode" . ]]"
   data        = <<EOH
 [[- if eq (var "secrets_backend" .) "nomad_var" ]]
 {{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kCert ]]" }}{{ end }}
@@ -234,7 +247,7 @@ EOH
 template {
   destination = "${NOMAD_SECRETS_DIR}/tls/key.pem"
   perms       = "0444"
-  change_mode = "restart"
+  change_mode = "[[ template "nomatron_secret_change_mode" . ]]"
   data        = <<EOH
 [[- if eq (var "secrets_backend" .) "nomad_var" ]]
 {{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kKey ]]" }}{{ end }}
@@ -248,7 +261,7 @@ EOH
 template {
   destination = "${NOMAD_SECRETS_DIR}/tls/ca.pem"
   perms       = "0444"
-  change_mode = "restart"
+  change_mode = "[[ template "nomatron_secret_change_mode" . ]]"
   data        = <<EOH
 [[- if eq (var "secrets_backend" .) "nomad_var" ]]
 {{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kCA ]]" }}{{ end }}

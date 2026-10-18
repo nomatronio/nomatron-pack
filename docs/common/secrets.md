@@ -33,7 +33,29 @@ nomad var put nomad/jobs/nomatron/nomatron-server/nomatron \
   serf_encrypt_key="$(nomatron keygen)"
 ```
 
-Re-run `nomad var put` to update values; allocations restart when `change_mode = "restart"`.
+Re-run `nomad var put` to update values. How Nomatron picks up changes depends on **`secret_change_mode`** and **`count`**:
+
+| `secret_change_mode` | `count` | Behaviour on Variable change |
+|---|---|---|
+| *(empty, default)* | 1 | **`restart`** — the allocation restarts and loads new secrets automatically |
+| *(empty, default)* | 2+ (HA) | **`noop`** — allocations keep running; rotated values are **not** applied until you restart each server |
+| `restart` | any | **`restart`** — every server allocation restarts (HA: simultaneous outage) |
+| `noop` | any | **`noop`** — never auto-restart on secret change |
+
+In HA (default `noop`), after rotating `encryption_key`, `license_key`, `cluster_key`, `db_url`, or TLS PEMs in the Variable, perform a **rolling restart** of Nomatron server allocations — one at a time, waiting for healthy between each:
+
+```bash
+# List running Nomatron server allocations (job/group names may differ if you set job_name)
+nomad job allocs nomatron | awk '$4 == "running" {print $1}'
+
+# For each alloc ID, restart and wait until the job is healthy before the next:
+nomad alloc restart <alloc-id>
+nomad job status -verbose nomatron   # wait until checks pass / allocation is running
+```
+
+Repeat until every server has been restarted once. Only then do all nodes share the new secret, licence, or TLS material.
+
+To restore automatic pickup on Variable change (single-server behaviour), set `secret_change_mode = "restart"` in your vars file. In HA that restarts **all** servers when any secret changes — use only if you accept a full API outage.
 
 ### Origin TLS PEMs (optional)
 

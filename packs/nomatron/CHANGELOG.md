@@ -1,3 +1,9 @@
+## Version v0.2.11 (2026-10-18)
+
+### Added
+
+- **`secret_change_mode`:** controls Nomad template `change_mode` for secret, license, and TLS templates when using `secrets_backend=nomad_var` or `vault`. Default (empty): `noop` when `count > 1` (HA — no simultaneous restarts on rotation) and `restart` when `count = 1`. Set `secret_change_mode=restart` to restore automatic pickup on change (all servers restart together).
+
 ## Version v0.2.10 (2026-09-02)
 
 ### Fixed
