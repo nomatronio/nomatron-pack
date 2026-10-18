@@ -565,7 +565,7 @@ telemetry {
 }
 EOH
     destination = "local/config/nomatron.hcl"
-    change_mode = "restart"
+    change_mode = "[[ template "nomatron_secret_change_mode" . ]]"
   }
 
   [[ template "nomatron_server_env_block" . ]]

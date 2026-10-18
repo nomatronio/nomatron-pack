@@ -92,15 +92,23 @@ EOF
 
 JOB="$(render_job "${VARS}/ha-default.hcl")"
 noop_count="$(count_change_modes "${JOB}" noop)"
-if [[ "${noop_count}" -lt 4 ]]; then
-  echo "expected at least 4 change_mode = noop for HA (secrets + TLS), got ${noop_count}" >&2
+if [[ "${noop_count}" -lt 5 ]]; then
+  echo "expected at least 5 change_mode = noop for HA (config + secrets + TLS), got ${noop_count}" >&2
+  exit 1
+fi
+if ! grep -A1 'destination = "local/config/nomatron.hcl"' "${JOB}" | grep -q 'change_mode = "noop"'; then
+  echo "expected local/config/nomatron.hcl template to use change_mode = noop in HA" >&2
+  exit 1
+fi
+if ! grep -q 'encrypt_key = {{- with nomadVar' "${JOB}"; then
+  echo "expected HA nomatron.hcl to embed serf encrypt_key from nomadVar" >&2
   exit 1
 fi
 
 JOB="$(render_job "${ROOT}/.ci/vars-secret-change-single.hcl")"
 restart_count="$(count_change_modes "${JOB}" restart)"
-if [[ "${restart_count}" -lt 4 ]]; then
-  echo "expected at least 4 change_mode = restart for count=1 (secrets + TLS), got ${restart_count}" >&2
+if [[ "${restart_count}" -lt 5 ]]; then
+  echo "expected at least 5 change_mode = restart for count=1 (config + secrets + TLS), got ${restart_count}" >&2
   exit 1
 fi
 if grep -q 'change_mode = "noop"' "${JOB}"; then
@@ -112,7 +120,7 @@ cp "${VARS}/ha-default.hcl" "${VARS}/ha-restart.hcl"
 echo 'secret_change_mode = "restart"' >> "${VARS}/ha-restart.hcl"
 JOB="$(render_job "${VARS}/ha-restart.hcl")"
 restart_ha="$(count_change_modes "${JOB}" restart)"
-if [[ "${restart_ha}" -lt 4 ]]; then
+if [[ "${restart_ha}" -lt 5 ]]; then
   echo "expected explicit secret_change_mode=restart on HA, got ${restart_ha} restart stanzas" >&2
   exit 1
 fi

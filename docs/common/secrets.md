@@ -158,7 +158,7 @@ See [examples/production.byodb.vault.vars.hcl.example](../../examples/production
 | `license_key` | Yes | `NOMATRON_LICENSE_KEY` |
 | `cluster_key` | Yes | `NOMATRON_CLUSTER_KEY` — identical on all HA nodes |
 | `db_url` | BYODB | `NOMATRON_DB_URL` — full Postgres URL with `sslmode=require` |
-| `serf_encrypt_key` | HA (`count > 1`) | Serf `encrypt_key` in `nomatron.hcl` |
+| `serf_encrypt_key` | HA (`count > 1`) | Serf `encrypt_key` in rendered `local/config/nomatron.hcl` (same `secret_change_mode` as other runtime templates) |
 | `root_password` | Optional bootstrap | `NOMATRON_ROOT_PASSWORD` |
 | `tls_cert` / `tls_key` / `tls_ca` | Origin TLS (`server.tls_enabled`, empty file paths) | `${NOMAD_SECRETS_DIR}/tls/*.pem` — rename via `tls_secrets_keys` |
 

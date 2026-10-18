@@ -398,7 +398,7 @@ variable "bootstrap" {
 }
 
 variable "secret_change_mode" {
-  description = "Nomad template change_mode for secret, license, and TLS templates (nomad_var or vault only). Empty (default): noop when count > 1 (HA — avoids simultaneous restarts on rotation), restart when count = 1. Set restart to auto-restart all servers on secret change; set noop to require a manual rolling restart in HA."
+  description = "Nomad template change_mode for runtime secret material: nomatron.env, TLS PEM templates, and local/config/nomatron.hcl when it embeds Nomad Variables / Vault (HA serf encrypt_key). Empty (default): noop when count > 1 (HA — avoids simultaneous restarts on rotation), restart when count = 1. Set restart to auto-restart all servers on secret change; set noop to require a manual rolling restart in HA."
   type        = string
   default     = ""
 }
