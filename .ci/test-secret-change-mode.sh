@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Nomatron Ltd
 # SPDX-License-Identifier: MPL-2.0
 #
-# Assert secret_change_mode resolution in rendered Nomatron server templates.
+# Assert secret_change_mode resolution and HA runtime secret placement.
 
 set -euo pipefail
 
@@ -25,12 +25,61 @@ count_change_modes() {
   grep -c "change_mode = \"${mode}\"" "${job}" || true
 }
 
+assert_ha_runtime_secret_layout() {
+  local job="$1"
+  python3 - "${job}" <<'PY'
+import re
+import sys
+
+job_path = sys.argv[1]
+text = open(job_path, encoding="utf-8").read()
+
+if re.search(r"encrypt_key\s*=\s*\{\{-?\s*with nomadVar", text):
+    sys.exit("serf encrypt_key must not be inline in nomatron.hcl via nomadVar")
+if re.search(r"destination\s*=\s*\"local/", text):
+    for m in re.finditer(
+        r"template\s*\{(.*?)\n\s*\}",
+        text,
+        flags=re.S,
+    ):
+        block = m.group(1)
+        if 'destination = "local/' not in block:
+            continue
+        if re.search(r"nomadVar|with secret|\.Data\.data", block):
+            sys.exit("local/ template must not read nomadVar, Vault secret, or .Data.data")
+        if re.search(r"serf_encrypt_key|encrypt_key", block):
+            sys.exit("serf key material must not appear in local/ templates")
+
+runtime_markers = (
+    r"nomadVar",
+    r"with secret",
+    r"\.Data\.data",
+)
+for m in re.finditer(
+    r"template\s*\{(.*?)\n\s*\}",
+    text,
+    flags=re.S,
+):
+    block = m.group(1)
+    if 'change_mode = "restart"' not in block:
+        continue
+    if any(re.search(p, block) for p in runtime_markers):
+        sys.exit("restart-mode template must not read Nomad Variables or Vault")
+
+if "secrets/serf.key" not in text:
+    sys.exit("expected ${NOMAD_SECRETS_DIR}/secrets/serf.key template")
+if "--serf-encrypt-key-file=${NOMAD_SECRETS_DIR}/secrets/serf.key" not in text:
+    sys.exit("expected --serf-encrypt-key-file in server args")
+PY
+}
+
 cat > "${VARS}/ha-default.hcl" <<'EOF'
 deployment_profile = "ha"
 database_mode      = "byodb"
 network_mode       = "bridge"
 runtime            = "docker"
 count              = 2
+nomatron_version   = "v0.1.1"
 secrets_backend    = "nomad_var"
 secrets_nomad_var = {
   path = "nomad/jobs/nomatron/nomatron-server/nomatron"
@@ -93,17 +142,10 @@ EOF
 JOB="$(render_job "${VARS}/ha-default.hcl")"
 noop_count="$(count_change_modes "${JOB}" noop)"
 if [[ "${noop_count}" -lt 5 ]]; then
-  echo "expected at least 5 change_mode = noop for HA (config + secrets + TLS), got ${noop_count}" >&2
+  echo "expected at least 5 change_mode = noop for HA (secrets + TLS + serf), got ${noop_count}" >&2
   exit 1
 fi
-if ! grep -A1 'destination = "local/config/nomatron.hcl"' "${JOB}" | grep -q 'change_mode = "noop"'; then
-  echo "expected local/config/nomatron.hcl template to use change_mode = noop in HA" >&2
-  exit 1
-fi
-if ! grep -q 'encrypt_key = {{- with nomadVar' "${JOB}"; then
-  echo "expected HA nomatron.hcl to embed serf encrypt_key from nomadVar" >&2
-  exit 1
-fi
+assert_ha_runtime_secret_layout "${JOB}"
 
 JOB="$(render_job "${ROOT}/.ci/vars-secret-change-single.hcl")"
 restart_count="$(count_change_modes "${JOB}" restart)"
@@ -121,7 +163,7 @@ echo 'secret_change_mode = "restart"' >> "${VARS}/ha-restart.hcl"
 JOB="$(render_job "${VARS}/ha-restart.hcl")"
 restart_ha="$(count_change_modes "${JOB}" restart)"
 if [[ "${restart_ha}" -lt 5 ]]; then
-  echo "expected explicit secret_change_mode=restart on HA, got ${restart_ha} restart stanzas" >&2
+  echo "expected explicit secret_change_mode=restart on HA runtime templates, got ${restart_ha} restart stanzas" >&2
   exit 1
 fi
 
@@ -129,6 +171,13 @@ cp "${VARS}/ha-default.hcl" "${VARS}/ha-invalid.hcl"
 echo 'secret_change_mode = "invalid"' >> "${VARS}/ha-invalid.hcl"
 if nomad-pack render --var-file="${VARS}/ha-invalid.hcl" -o "${RENDERED}" "${PACK}" >/dev/null 2>&1; then
   echo "expected render failure for invalid secret_change_mode" >&2
+  exit 1
+fi
+
+cp "${VARS}/ha-default.hcl" "${VARS}/ha-old-version.hcl"
+sed -i 's/nomatron_version   = "v0.1.1"/nomatron_version   = "v0.1.0-rc.45"/' "${VARS}/ha-old-version.hcl"
+if nomad-pack render --var-file="${VARS}/ha-old-version.hcl" -o "${RENDERED}" "${PACK}" >/dev/null 2>&1; then
+  echo "expected render failure for HA nomad_var below v0.1.1" >&2
   exit 1
 fi
 

@@ -30,7 +30,7 @@ variable "load_balancer_mode" {
 }
 
 variable "nomatron_version" {
-  description = "Nomatron release version tag (for example v0.1.0-rc.45). Used for container image and binary artifact URLs. HA on Nomad requires v0.1.0-rc.45 or later so Serf registration uses NOMAD_HOST_IP_serf."
+  description = "Nomatron release version tag (for example v0.1.1). Used for container image and binary artifact URLs. HA on Nomad requires v0.1.0-rc.45 or later so Serf registration uses NOMAD_HOST_IP_serf. HA with secrets_backend=nomad_var or vault requires v0.1.1+ for --serf-encrypt-key-file."
   type        = string
   default     = "v0.1.0-rc.45"
 }
@@ -398,7 +398,7 @@ variable "bootstrap" {
 }
 
 variable "secret_change_mode" {
-  description = "Nomad template change_mode for runtime secret material: nomatron.env, TLS PEM templates, and local/config/nomatron.hcl when it embeds Nomad Variables / Vault (HA serf encrypt_key). Empty (default): noop when count > 1 (HA — avoids simultaneous restarts on rotation), restart when count = 1. Set restart to auto-restart all servers on secret change; set noop to require a manual rolling restart in HA."
+  description = "Nomad template change_mode for runtime secret templates: nomatron.env, TLS PEMs, and NOMAD_SECRETS_DIR/secrets/serf.key (HA gossip key). Empty (default): noop when count > 1 (HA — avoids simultaneous restarts on rotation), restart when count = 1. Set restart to auto-restart all servers on secret change; set noop to require a manual rolling restart in HA."
   type        = string
   default     = ""
 }

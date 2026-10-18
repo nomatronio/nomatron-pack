@@ -38,11 +38,11 @@ Re-run `nomad var put` to update values. How Nomatron picks up changes depends o
 | `secret_change_mode` | `count` | Behaviour on Variable change |
 |---|---|---|
 | *(empty, default)* | 1 | **`restart`** — the allocation restarts and loads new secrets automatically |
-| *(empty, default)* | 2+ (HA) | **`noop`** — allocations keep running; rotated values are **not** applied until you restart each server |
+| *(empty, default)* | 2+ (HA) | **`noop`** on secret/TLS/Serf-key templates — those allocations **keep running**; rotated values are **not** applied until you rolling-restart each server (see below). Other templates (for example static `local/config/nomatron.hcl` from pack vars) are unchanged by Variable updates alone. |
 | `restart` | any | **`restart`** — every server allocation restarts (HA: simultaneous outage) |
 | `noop` | any | **`noop`** — never auto-restart on secret change |
 
-In HA (default `noop`), after rotating `encryption_key`, `license_key`, `cluster_key`, `db_url`, or TLS PEMs in the Variable, perform a **rolling restart** of Nomatron server allocations — one at a time, waiting for healthy between each:
+In HA (default `noop`), after rotating `encryption_key`, `license_key`, `cluster_key`, `db_url`, `serf_encrypt_key`, or TLS PEMs in the Variable, perform a **rolling restart** of Nomatron server allocations — one at a time, waiting for healthy between each:
 
 ```bash
 # List running Nomatron server allocations (job/group names may differ if you set job_name)
@@ -158,7 +158,7 @@ See [examples/production.byodb.vault.vars.hcl.example](../../examples/production
 | `license_key` | Yes | `NOMATRON_LICENSE_KEY` |
 | `cluster_key` | Yes | `NOMATRON_CLUSTER_KEY` — identical on all HA nodes |
 | `db_url` | BYODB | `NOMATRON_DB_URL` — full Postgres URL with `sslmode=require` |
-| `serf_encrypt_key` | HA (`count > 1`) | Serf `encrypt_key` in rendered `local/config/nomatron.hcl` (same `secret_change_mode` as other runtime templates) |
+| `serf_encrypt_key` | HA (`count > 1`) | `${NOMAD_SECRETS_DIR}/secrets/serf.key` — Nomatron **v0.1.1+** reads it via `--serf-encrypt-key-file` (not written under `local/`). Same `secret_change_mode` as other runtime templates. |
 | `root_password` | Optional bootstrap | `NOMATRON_ROOT_PASSWORD` |
 | `tls_cert` / `tls_key` / `tls_ca` | Origin TLS (`server.tls_enabled`, empty file paths) | `${NOMAD_SECRETS_DIR}/tls/*.pem` — rename via `tls_secrets_keys` |
 

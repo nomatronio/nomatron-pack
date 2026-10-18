@@ -110,6 +110,11 @@ constraint {
 [[- if and (ne $secretChangeMode "") (ne $secretChangeMode "restart") (ne $secretChangeMode "noop") -]]
 [[ fail "secret_change_mode must be empty, restart, or noop." ]]
 [[- end -]]
+[[- if and (gt $count 1) (ne $secretsBackend "pack_vars") -]]
+[[- if semverCompare "< 0.1.1-0" (trimPrefix "v" (var "nomatron_version" .)) -]]
+[[ fail "HA with secrets_backend=nomad_var|vault requires nomatron_version v0.1.1 or later (--serf-encrypt-key-file for Serf gossip). Upgrade nomatron_version or use secrets_backend=pack_vars only for lab." ]]
+[[- end -]]
+[[- end -]]
 [[- if eq $dbMode "byodb" -]]
 [[- if eq $secretsBackend "pack_vars" -]]
 [[- if and (eq (var "database.connection_string" .) "") (eq (var "database.host" .) "") -]]
@@ -274,20 +279,39 @@ EOH
 [[- end ]]
 [[- end -]]
 
-[[- define "nomatron_serf_encrypt_key_hcl" -]]
-[[- if gt (var "count" .) 1 ]]
+[[- define "nomatron_serf_encrypt_key_secret_template" -]]
+[[- if and (gt (var "count" .) 1) (ne (var "secrets_backend" .) "pack_vars") ]]
 [[- $path := var "secrets_nomad_var.path" . -]]
 [[- $kSerf := coalesce (var "secrets_nomad_var.keys.serf_encrypt_key" .) "serf_encrypt_key" -]]
 [[- $vPath := var "secrets_vault.path" . -]]
 [[- $vSerf := coalesce (var "secrets_vault.keys.serf_encrypt_key" .) "serf_encrypt_key" -]]
-[[- if eq (var "secrets_backend" .) "pack_vars" ]]
+template {
+  destination = "${NOMAD_SECRETS_DIR}/secrets/serf.key"
+  perms       = "0400"
+  change_mode = "[[ template "nomatron_secret_change_mode" . ]]"
+  data        = <<EOH
+[[- if eq (var "secrets_backend" .) "nomad_var" ]]
+{{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kSerf ]]" }}{{ end }}
+[[- else ]]
+{{- with secret "[[ $vPath ]]" }}{{ .Data.data.[[ $vSerf ]] }}{{ end }}
+[[- end ]]
+EOH
+}
+[[- end ]]
+[[- end -]]
+
+[[- define "nomatron_serf_encrypt_key_hcl" -]]
+[[- if and (gt (var "count" .) 1) (eq (var "secrets_backend" .) "pack_vars") ]]
   encrypt_key = [[ var "serf.encrypt_key" . | quote ]]
-[[- else if eq (var "secrets_backend" .) "nomad_var" ]]
-  encrypt_key = {{- with nomadVar "[[ $path ]]" }}{{ index . "[[ $kSerf ]]" | toJSON }}{{- end }}
-[[- else if eq (var "secrets_backend" .) "vault" ]]
-  encrypt_key = {{- with secret "[[ $vPath ]]" }}{{ .Data.data.[[ $vSerf ]] | toJSON }}{{- end }}
 [[- end ]]
-[[- end ]]
+[[- end -]]
+
+[[- define "nomatron_server_args" -]]
+[[- $args := list "server" "--config" "${NOMAD_TASK_DIR}/config/nomatron.hcl" -]]
+[[- if and (gt (var "count" .) 1) (ne (var "secrets_backend" .) "pack_vars") -]]
+[[- $args = append $args "--serf-encrypt-key-file=${NOMAD_SECRETS_DIR}/secrets/serf.key" -]]
+[[- end -]]
+[[ $args | toStringList ]]
 [[- end -]]
 
 [[- define "nomatron_database_connection_hcl" -]]
@@ -352,6 +376,7 @@ NOMATRON_DB_URL = [[ if and (eq (var "database_mode" .) "provision") (gt (var "c
 [[- define "nomatron_server_env_block" -]]
 [[ template "nomatron_secrets_env_template" . ]]
 [[ template "nomatron_tls_secrets_templates" . ]]
+[[ template "nomatron_serf_encrypt_key_secret_template" . ]]
 env {
   # rc.45+ registers this host IP/port into server_nodes when bind is 0.0.0.0.
   # Nomad interpolates these from group port "serf". Missing values fall back to 127.0.0.1.
@@ -426,7 +451,7 @@ task "nomatron" {
   config {
     image = "ghcr.io/nomatronio/nomatron-releases/nomatron:[[ var "nomatron_version" . ]]"
     ports = ["http", "grpc", "serf"]
-    args  = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
+    args  = [[ template "nomatron_server_args" . ]]
   }
   [[- else if eq (var "binary_install_method" .) "artifact" ]]
   artifact {
@@ -436,12 +461,12 @@ task "nomatron" {
 
   config {
     command = "[[ template "binary_artifact_command" . ]]"
-    args    = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
+    args    = [[ template "nomatron_server_args" . ]]
   }
   [[- else ]]
   config {
     command = [[ var "binary_path" . | quote ]]
-    args    = ["server", "--config", "${NOMAD_TASK_DIR}/config/nomatron.hcl"]
+    args    = [[ template "nomatron_server_args" . ]]
   }
   [[- end ]]
 
@@ -565,7 +590,7 @@ telemetry {
 }
 EOH
     destination = "local/config/nomatron.hcl"
-    change_mode = "[[ template "nomatron_secret_change_mode" . ]]"
+    change_mode = "restart"
   }
 
   [[ template "nomatron_server_env_block" . ]]
