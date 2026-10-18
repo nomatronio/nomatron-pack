@@ -158,7 +158,7 @@ See [examples/production.byodb.vault.vars.hcl.example](../../examples/production
 | `license_key` | Yes | `NOMATRON_LICENSE_KEY` |
 | `cluster_key` | Yes | `NOMATRON_CLUSTER_KEY` — identical on all HA nodes |
 | `db_url` | BYODB | `NOMATRON_DB_URL` — full Postgres URL with `sslmode=require` |
-| `serf_encrypt_key` | HA (`count > 1`) | `${NOMAD_SECRETS_DIR}/secrets/serf.key` — Nomatron **v0.1.1+** reads it via `--serf-encrypt-key-file` (not written under `local/`). Same `secret_change_mode` as other runtime templates. |
+| `serf_encrypt_key` | HA (`count > 1`); optional for single-server | `${NOMAD_SECRETS_DIR}/secrets/serf.key` when using `nomad_var` or `vault` (any `count`) — Nomatron **v0.1.1+** reads it via `--serf-encrypt-key-file` (never under `local/`). Same `secret_change_mode` as other runtime templates. |
 | `root_password` | Optional bootstrap | `NOMATRON_ROOT_PASSWORD` |
 | `tls_cert` / `tls_key` / `tls_ca` | Origin TLS (`server.tls_enabled`, empty file paths) | `${NOMAD_SECRETS_DIR}/tls/*.pem` — rename via `tls_secrets_keys` |
 
@@ -173,6 +173,8 @@ nomad-pack run --var-file=mac-dev.vars.hcl .
 ```
 
 Never commit real secrets. This mode is validated in CI only with placeholder values.
+
+When **`secrets_backend=pack_vars`** and **`count > 1`**, the Serf gossip key is rendered inline into `local/config/nomatron.hcl` from `serf.encrypt_key`. That value appears in the **Nomad job specification** and in the allocation **`local/`** tree — anyone with job read or `alloc fs` access can read it. For production (including single-server), use **`nomad_var` or `vault`** so the key is written only under **`NOMAD_SECRETS_DIR`** and loaded via **`--serf-encrypt-key-file`** (Nomatron v0.1.1+).
 
 ## Related
 
