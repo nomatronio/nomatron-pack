@@ -69,8 +69,23 @@ if re.search(r"encrypt_key\s*=\s*\{\{-?\s*with nomadVar", text):
 if backend in ("nomad_var", "vault"):
     if "secrets/serf.key" not in text:
         sys.exit("expected NOMAD_SECRETS_DIR secrets/serf.key template")
+    if not re.search(
+        r'destination = "\$\{NOMAD_SECRETS_DIR\}/secrets/serf\.key"[\s\S]*?perms\s+=\s+"0444"',
+        text,
+    ):
+        sys.exit("serf.key template must use perms 0444 for Distroless nonroot")
     if "--serf-encrypt-key-file=${NOMAD_SECRETS_DIR}/secrets/serf.key" not in text:
         sys.exit("expected --serf-encrypt-key-file in server args")
+    if backend == "vault" and not re.search(
+        r"secrets/serf\.key[\s\S]*with secret", text
+    ):
+        sys.exit("vault HA should load serf key via Vault secret template")
+
+if backend == "pack_vars":
+    if "secrets/serf.key" in text or "--serf-encrypt-key-file" in text:
+        sys.exit("pack_vars must not use serf.key file or --serf-encrypt-key-file")
+    if count > 1 and not re.search(r"encrypt_key\s*=\s*\"", text):
+        sys.exit("pack_vars HA should inline serf encrypt_key in rendered job (lab only)")
 PY
 }
 
@@ -149,6 +164,21 @@ for var_file in "${ROOT}"/.ci/vars-*.hcl; do
   JOB="$(render_job "${var_file}")"
   assert_serf_and_local_layout "${JOB}" "${backend}" "${count}" "${scm}"
 done
+
+JOB="$(render_job "${ROOT}/.ci/vars-ha-vault.hcl")"
+assert_serf_and_local_layout "${JOB}" "vault" "2" ""
+noop_count="$(count_change_modes "${JOB}" noop)"
+if [[ "${noop_count}" -lt 5 ]]; then
+  echo "expected at least 5 noop templates for HA vault, got ${noop_count}" >&2
+  exit 1
+fi
+
+JOB="$(render_job "${ROOT}/.ci/vars-ha.hcl")"
+assert_serf_and_local_layout "${JOB}" "pack_vars" "3" ""
+if ! grep -q 'encrypt_key = "Y2ktcGxhY2Vob2xkZXItc2VyZi' "${JOB}"; then
+  echo "expected inline serf encrypt_key for pack_vars HA fixture" >&2
+  exit 1
+fi
 
 JOB="$(render_job "${VARS}/ha-default.hcl")"
 noop_count="$(count_change_modes "${JOB}" noop)"

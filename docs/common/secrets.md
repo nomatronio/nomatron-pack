@@ -174,7 +174,15 @@ nomad-pack run --var-file=mac-dev.vars.hcl .
 
 Never commit real secrets. This mode is validated in CI only with placeholder values.
 
-When **`secrets_backend=pack_vars`** and **`count > 1`**, the Serf gossip key is rendered inline into `local/config/nomatron.hcl` from `serf.encrypt_key`. That value appears in the **Nomad job specification** and in the allocation **`local/`** tree — anyone with job read or `alloc fs` access can read it. For production (including single-server), use **`nomad_var` or `vault`** so the key is written only under **`NOMAD_SECRETS_DIR`** and loaded via **`--serf-encrypt-key-file`** (Nomatron v0.1.1+).
+**Lab / CI only — not for production.** With **`secrets_backend=pack_vars`**, sensitive values are **by design** baked into the rendered job:
+
+- **Serf gossip key** (`count > 1`): inline `encrypt_key` in the `local/config/nomatron.hcl` template from `serf.encrypt_key`
+- **Database password**: literal in `NOMATRON_DB_URL` / `connection_string` env and config templates when using component fields
+- **Other secrets**: `NOMATRON_ENCRYPTION_KEY`, `NOMATRON_LICENSE_KEY`, and `NOMATRON_CLUSTER_KEY` in plain `env { }` stanzas
+
+All of the above appear in the **Nomad job specification** and in the allocation **`local/`** tree — anyone with job read or **`nomad alloc fs`** access can read them. That is acceptable for homelab and CI placeholders only.
+
+For production (single-server or HA), use **`nomad_var` or `vault`** so secrets and the Serf key are written under **`NOMAD_SECRETS_DIR`** (not `local/`) and the server loads the gossip key via **`--serf-encrypt-key-file`** (Nomatron v0.1.1+).
 
 ## Related
 

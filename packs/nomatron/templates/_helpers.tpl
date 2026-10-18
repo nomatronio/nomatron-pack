@@ -287,7 +287,7 @@ EOH
 [[- $vSerf := coalesce (var "secrets_vault.keys.serf_encrypt_key" .) "serf_encrypt_key" -]]
 template {
   destination = "${NOMAD_SECRETS_DIR}/secrets/serf.key"
-  perms       = "0400"
+  perms       = "0444"
   change_mode = "[[ template "nomatron_secret_change_mode" . ]]"
   data        = <<EOH
 [[- if eq (var "secrets_backend" .) "nomad_var" ]]
