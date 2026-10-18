@@ -722,6 +722,7 @@ Generate `encryption_key` and `serf.encrypt_key` yourself. For production, store
 ## Key variables
 
 - `secrets_backend` — `pack_vars`, `nomad_var`, or `vault`
+- `secret_change_mode` — Nomad template `change_mode` for runtime secrets/TLS (`""` → `noop` when `count > 1`, `restart` when `count = 1`; see [Secrets management](https://github.com/nomatronio/nomatron-pack/blob/main/docs/common/secrets.md))
 - `deployment_profile` — `quickstart`, `production`, or `ha`
 - `database_mode` — `provision` (lab default) or `byodb`
 - `runtime` — `docker` or `binary`

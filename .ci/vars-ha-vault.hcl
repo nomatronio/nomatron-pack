@@ -1,0 +1,77 @@
+# Copyright (c) 2026 Nomatron Ltd
+# SPDX-License-Identifier: MPL-2.0
+#
+# CI fixture — HA profile with Vault secrets backend (render/validate only).
+
+deployment_profile = "ha"
+database_mode      = "byodb"
+network_mode       = "bridge"
+runtime            = "docker"
+count              = 2
+nomatron_version   = "v0.1.1"
+
+secrets_backend = "vault"
+
+secrets_vault = {
+  policies = ["nomatron"]
+  path     = "secret/data/nomatron/ci"
+}
+
+load_balancer_mode = "none"
+register_service   = false
+http_port_static   = 4649
+
+public_hostname = "nomatron.ci.example.com"
+public_scheme   = "https"
+
+database = {
+  host                       = "db-writer.ci.example.com"
+  port                       = 5432
+  name                       = "nomatron"
+  username                   = "nomatron"
+  sslmode                    = "require"
+  connection_string          = ""
+  password                   = ""
+  max_open_conns             = 25
+  max_idle_conns             = 10
+  conn_max_lifetime_seconds  = 300
+  conn_max_idle_time_seconds = 60
+}
+
+server = {
+  port                          = 4649
+  api_addr                      = "https://nomatron.ci.example.com"
+  trusted_origins               = ["https://nomatron.ci.example.com"]
+  log_level                     = "info"
+  log_format                    = "json"
+  read_header_timeout_seconds   = 10
+  read_timeout_seconds          = 30
+  write_timeout_seconds         = 60
+  idle_timeout_seconds          = 120
+  tls_enabled                   = true
+  tls_cert_file                 = ""
+  tls_key_file                  = ""
+  tls_ca_file                   = ""
+}
+
+serf = {
+  node_name           = ""
+  bind_addr           = "0.0.0.0"
+  advertise_addr      = ""
+  port                = 7946
+  retry_join          = ["10.0.0.10:7946", "10.0.0.11:7946"]
+  retry_join_interval = "30s"
+  retry_join_max      = 0
+  encrypt_key         = ""
+  tags                = {}
+  gossip_interval_ms  = 0
+  gossip_nodes        = 0
+  probe_interval_ms   = 0
+  probe_timeout_ms    = 0
+}
+
+secrets = {
+  encryption_key = ""
+  license_key    = ""
+  cluster_key    = ""
+}

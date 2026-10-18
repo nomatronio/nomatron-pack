@@ -8,6 +8,7 @@ database_mode      = "byodb"
 network_mode       = "bridge"
 runtime            = "docker"
 count              = 1
+nomatron_version   = "v0.1.1"
 
 secrets_backend = "nomad_var"
 

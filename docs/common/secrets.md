@@ -33,7 +33,29 @@ nomad var put nomad/jobs/nomatron/nomatron-server/nomatron \
   serf_encrypt_key="$(nomatron keygen)"
 ```
 
-Re-run `nomad var put` to update values; allocations restart when `change_mode = "restart"`.
+Re-run `nomad var put` to update values. How Nomatron picks up changes depends on **`secret_change_mode`** and **`count`**:
+
+| `secret_change_mode` | `count` | Behaviour on Variable change |
+|---|---|---|
+| *(empty, default)* | 1 | **`restart`** — the allocation restarts and loads new secrets automatically |
+| *(empty, default)* | 2+ (HA) | **`noop`** on secret/TLS/Serf-key templates — those allocations **keep running**; rotated values are **not** applied until you rolling-restart each server (see below). Other templates (for example static `local/config/nomatron.hcl` from pack vars) are unchanged by Variable updates alone. |
+| `restart` | any | **`restart`** — every server allocation restarts (HA: simultaneous outage) |
+| `noop` | any | **`noop`** — never auto-restart on secret change |
+
+In HA (default `noop`), after rotating `encryption_key`, `license_key`, `cluster_key`, `db_url`, `serf_encrypt_key`, or TLS PEMs in the Variable, perform a **rolling restart** of Nomatron server allocations — one at a time, waiting for healthy between each:
+
+```bash
+# List running Nomatron server allocations (job/group names may differ if you set job_name)
+nomad job allocs nomatron | awk '$4 == "running" {print $1}'
+
+# For each alloc ID, restart and wait until the job is healthy before the next:
+nomad alloc restart <alloc-id>
+nomad job status -verbose nomatron   # wait until checks pass / allocation is running
+```
+
+Repeat until every server has been restarted once. Only then do all nodes share the new secret, licence, or TLS material.
+
+To restore automatic pickup on Variable change (single-server behaviour), set `secret_change_mode = "restart"` in your vars file. In HA that restarts **all** servers when any secret changes — use only if you accept a full API outage.
 
 ### Origin TLS PEMs (optional)
 
@@ -136,7 +158,7 @@ See [examples/production.byodb.vault.vars.hcl.example](../../examples/production
 | `license_key` | Yes | `NOMATRON_LICENSE_KEY` |
 | `cluster_key` | Yes | `NOMATRON_CLUSTER_KEY` — identical on all HA nodes |
 | `db_url` | BYODB | `NOMATRON_DB_URL` — full Postgres URL with `sslmode=require` |
-| `serf_encrypt_key` | HA (`count > 1`) | Serf `encrypt_key` in `nomatron.hcl` |
+| `serf_encrypt_key` | HA (`count > 1`); optional for single-server | `${NOMAD_SECRETS_DIR}/secrets/serf.key` when using `nomad_var` or `vault` (any `count`) — Nomatron **v0.1.1+** reads it via `--serf-encrypt-key-file` (never under `local/`). Same `secret_change_mode` as other runtime templates. |
 | `root_password` | Optional bootstrap | `NOMATRON_ROOT_PASSWORD` |
 | `tls_cert` / `tls_key` / `tls_ca` | Origin TLS (`server.tls_enabled`, empty file paths) | `${NOMAD_SECRETS_DIR}/tls/*.pem` — rename via `tls_secrets_keys` |
 
@@ -151,6 +173,16 @@ nomad-pack run --var-file=mac-dev.vars.hcl .
 ```
 
 Never commit real secrets. This mode is validated in CI only with placeholder values.
+
+**Lab / CI only — not for production.** With **`secrets_backend=pack_vars`**, sensitive values are **by design** baked into the rendered job:
+
+- **Serf gossip key** (`count > 1`): inline `encrypt_key` in the `local/config/nomatron.hcl` template from `serf.encrypt_key`
+- **Database password**: literal in `NOMATRON_DB_URL` / `connection_string` env and config templates when using component fields
+- **Other secrets**: `NOMATRON_ENCRYPTION_KEY`, `NOMATRON_LICENSE_KEY`, and `NOMATRON_CLUSTER_KEY` in plain `env { }` stanzas
+
+All of the above appear in the **Nomad job specification** and in the allocation **`local/`** tree — anyone with job read or **`nomad alloc fs`** access can read them. That is acceptable for homelab and CI placeholders only.
+
+For production (single-server or HA), use **`nomad_var` or `vault`** so secrets and the Serf key are written under **`NOMAD_SECRETS_DIR`** (not `local/`) and the server loads the gossip key via **`--serf-encrypt-key-file`** (Nomatron v0.1.1+).
 
 ## Related
 
